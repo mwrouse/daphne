@@ -182,13 +182,13 @@ description: Welcome to my home page
 testVar: Noop 
 ---
 Hello, thank you for visiting my homepage: 
-{{ foreach site.posts as post }} 
+{% foreach site.posts as post %} 
 	<h4>{{ post.title }}</h4>
 	<p>Posted on {{ post.date }}</p><br/>
 	<p>{{ post.excerpt }}</p>
 	<a href="{{ post.url }}">Click here to read more</a>
 	<br/>
-{{ end foreach }}
+{% end foreach %}
 ```
 
 #### _templates/default.html
