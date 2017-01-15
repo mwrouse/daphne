@@ -1,7 +1,7 @@
 # Daphne 
 ![Daphne Blake](dist/daphneblake.jpg) 
 
-Daphne is a portable tool that allows you to easily create static blogs. With Daphne, you can create your own templates to fully customize your website. Very similar to Jekyll, Daphne takes out some complexity of such a tool. 
+Daphne is a portable tool that allows you to easily create static blogs. You define your content, pages, posts, and templates, and Daphne will combine everything into a complete website based on your specifications. Very similar to Jekyll, except Daphne removes some complexity.
 
 ## Getting Started 
 Getting started with Daphne is easy, simply download [dist/daphne.exe](dist/daphne.exe), place it in the directory of your website, or somewhere else and link to it with your `PATH` environment variable, and use the following command to build your website: 
