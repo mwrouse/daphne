@@ -230,6 +230,7 @@ Thanks!
 ```
 
 ## Built Example Website
+![example website being build](dist/example_website.png)
 When you build this website, you will get the following new folder: 
 ```
 .
