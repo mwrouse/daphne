@@ -111,7 +111,6 @@ func (self CompilerState) IgnoreDir(dir string) (bool) {
         return false
     }
 
-
     dirPath := Helpers.Split(dir, "\\")
 
     if dir[:1] == "_"  {
@@ -120,6 +119,22 @@ func (self CompilerState) IgnoreDir(dir string) (bool) {
     }
     return (dir[:1] == "." && len(dir) > 1)
 }
+
+
+func (self CompilerState) IgnoreDirDuringWatch(dir string) (bool) {
+    if len(dir) < 1 {
+        return false
+    }
+
+    dirPath := Helpers.Split(dir, "\\")
+
+    if dir[:1] == "_"  {
+        dir = dirPath[0]
+        return dir == self.Config["compiler.output"]
+    }
+    return (dir[:1] == "." && len(dir) > 1)
+}
+
 
 
 func (self CompilerState) GetSpecial(name string) ([]DataTypes.Page) {
