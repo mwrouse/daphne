@@ -9,9 +9,9 @@ import (
     "daphne/Errors"
     "fmt"
     "os"
-    "io/ioutil"
     "regexp"
     "time"
+    "net/http"
 )
 
 
@@ -46,33 +46,22 @@ func main() {
         argument = Helpers.ToLower(os.Args[1])
     }
 
+    // Perform the prebuild actions before doing anything
+    PreBuild(wd)
+
 
     switch (argument) {
     case "build":
         Build(wd)
 
     case "watch":
-        Build(wd)
-        Helpers.Print("White", "Monitoring...")
-        for {
-            if FileWatch(wd) {
-                Build(wd)
-                Helpers.Print("White", "\nMonitoring...")
-            }
-            time.Sleep(1000 * time.Millisecond)
-        }
+        Watch(wd)
 
     case "new":
-        dirs := []string{"_includes","_templates","_posts"}
-        for _, fldr := range dirs {
-            os.MkdirAll(fldr, 077)
-        }
-        
-        if !FileSystem.FileExists("_config.daphne") {
-            FileSystem.WriteFile("_config.daphne", []string{"site: {","}","blog: {", "}"})
-        }
+        NewProject()
 
-        Helpers.Print("Green", "Finished, default files have been created!")
+    case "serve":
+        Serve(wd)
 
     default:
         (Errors.NewFatal("Unknown argument: ", argument)).Handle()
@@ -80,22 +69,33 @@ func main() {
 }
 
 
+/**
+  * Name.........: PreBuild
+  * Parameters...: wd (string) - the working directory
+  * Description..: Discovers files and reads the Daphne configuration
+  */
+func PreBuild(wd string) {
+    Helpers.Print("White", "Pre-Build...")
 
-
-
-
-func Build(wd string) {
-    Helpers.Print("White", "Building...")
-
-    // Get information from the config file
+    // Get config file info
     err := Parser.ParseConfigFile(wd, ProgramState)
     err.Handle()
 
-    // Remove the output directory and its contents
+    // Clear the output directory
     FileSystem.EmptyDir(ProgramState.Config["compiler.output"])
+}
 
-    // Loop through list of files
+
+/**
+  * Name.........: Build
+  * Parameters...: wd (string)
+  * Description..: Builds all of the files (runs after PreBuild)
+  */
+func Build(wd string) {
+    // Preparse all the files so they can reference one another
     Parser.PreparseFiles(ProgramState.Config["compiler.source"], ProgramState)
+
+    Helpers.Print("White", "Building...")
 
     // Expand Everything
     for _, pageType := range []string{"pages", "posts"} {
@@ -115,36 +115,92 @@ func Build(wd string) {
 }
 
 
+/**
+  * Name.........: Watch
+  * Parameters...: wd (string)
+  * Description..: Watches for file changes in an infinite loop
+  */
+func Watch(wd string) {
+    Build(wd)
 
-func FileWatch(dir string) (bool) {
-    list, err := ioutil.ReadDir(dir)
-    if err != nil {
-        (Errors.NewFatal(err.Error())).Handle()
+    Helpers.Print("White", "Monitoring...")
+    for {
+        // Watch for file changes, build if one has changed
+        if FileWatch(wd) {
+            Build(wd)
+        }
+        time.Sleep(1000 * time.Millisecond)
+    }
+}
+
+
+/**
+  * Name.........: NewProject
+  * Parameters...: wd (string)
+  * Description..: Creates basic file structure
+  */
+func NewProject() {
+    dirs := []string{"_includes","_templates","_posts"}
+    for _, fldr := range dirs {
+        os.MkdirAll(fldr, 077)
     }
 
-    for _, file := range list {
-        name := ProgramState.Path(dir + "\\" + file.Name())
+    if !FileSystem.FileExists("_config.daphne") {
+        FileSystem.WriteFile("_config.daphne", []string{"site: {","}","blog: {", "}"})
+    }
 
-        if file.IsDir() {
-            if file.Name() != ProgramState.Config["compiler.output"] {
-                if FileWatch(dir + "\\" + file.Name()) {
-                    return true
-                }
-            }
-        } else {
+    Helpers.Print("Green", "Finished, default files have been created!")
+}
+
+
+/**
+  * Name.........: Serve
+  * Parameters...: wd (string)
+  * Description..: Builds files and starts a web server
+  */
+func Serve(wd string) {
+    // Modify the URL of the website
+    ProgramState.Config["site.url"] = "http://localhost:8081/"
+
+    // Start the web server
+    http.Handle("/", http.FileServer(http.Dir("./" + ProgramState.Config["compiler.output"])))
+
+    Helpers.Print("Yellow", "\n\nWeb Server Started: ", ProgramState.Config["site.url"])
+    go http.ListenAndServe(":8081", nil)
+    Watch(wd)
+}
+
+
+/**
+  * Name.........: FileWatch
+  * Parameters...: dir (string)
+  * Return.......: bool - true if a file has changed
+  * Description..: Monitors files for changes
+  */
+func FileWatch(dir string) (bool) {
+    files := FileSystem.CollapseDirectory(dir, "", true) // Get all the files in the directory
+
+    for _, file := range files {
+        if ProgramState.IgnoreDir(file.Directory) {
+            continue
+        }
+
+        if validFileExtensions.MatchString(file.Info.Name()) {
+            name := ProgramState.Path(file.Directory + "\\" + file.Info.Name())
+
             if !fileWatch[name].IsZero() {
-                // Check if modifitcation time has changed
-                if !fileWatch[name].Equal(file.ModTime()) {
+                // Check if modification time is different
+                if !fileWatch[name].Equal(file.Info.ModTime()) {
+                    fmt.Println(file.Directory)
+
                     Helpers.Print("Magenta", name + " was modified, will rebuild.")
-                    fileWatch[name] = file.ModTime()
+                    fileWatch[name] = file.Info.ModTime()
                     return true
                 }
             } else {
-                // Get modification time
-                fileWatch[name] = file.ModTime()
+                fileWatch[name] = file.Info.ModTime()
             }
         }
     }
-
     return false
 }

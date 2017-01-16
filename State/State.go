@@ -111,7 +111,11 @@ func (self CompilerState) IgnoreDir(dir string) (bool) {
         return false
     }
 
+
+    dirPath := Helpers.Split(dir, "\\")
+
     if dir[:1] == "_"  {
+        dir = dirPath[0]
         return dir == self.Config["compiler.include_dir"] || dir == self.Config["compiler.template_dir"] || dir == self.Config["compiler.output"]
     }
     return (dir[:1] == "." && len(dir) > 1)

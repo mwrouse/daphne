@@ -19,7 +19,6 @@ var validFileExtensions, _ = regexp.Compile("^[^_\\.](.*)?$")
 func PreparseFiles(dir string, ProgramState *State.CompilerState) {
     files := FileSystem.CollapseDirectory(dir, "", true) // Get all the files in the directory
 
-
     // Loop through them
     for _, file := range files {
         if ProgramState.IgnoreDir(file.Directory) {
@@ -39,7 +38,7 @@ func PreparseFiles(dir string, ProgramState *State.CompilerState) {
                     page, err := ParsePost(name, ProgramState)
                     err.Handle()
                     page.IsBlogPost = true
-                    
+
                     if !err.IsFatal() {
                         ProgramState.Special["site.posts"] = append(ProgramState.Special["site.posts"], page)
                     }

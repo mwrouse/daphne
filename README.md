@@ -14,6 +14,13 @@ Or, if you want to build your website as you make changes:
 ```
 Now, any time a file changes Daphne will rebuild your website!
 
+If you want to host your website locally to see the changes: 
+```text
+.\daphne.exe serve 
+```
+Will host your website on `http://localhost:8081`
+
+
 ### Starting From Nothing 
 If you are starting with a completely blank project, run: 
 ```text
