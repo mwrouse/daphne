@@ -136,6 +136,7 @@ func Watch(wd string) {
     for {
         // Watch for file changes, build if one has changed
         if FileWatch(wd) {
+            ProgramState.Special = make(map[string][]DataTypes.Page) // Clear to avoid duplicates
             Build(wd)
         }
         time.Sleep(1000 * time.Millisecond)
