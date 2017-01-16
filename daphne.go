@@ -46,22 +46,31 @@ func main() {
         argument = Helpers.ToLower(os.Args[1])
     }
 
-    // Perform the prebuild actions before doing anything
-    PreBuild(wd)
-
 
     switch (argument) {
     case "build":
+        PreBuild(wd)
         Build(wd)
 
     case "watch":
+        PreBuild(wd)
         Watch(wd)
 
     case "new":
+        PreBuild(wd)
         NewProject()
 
     case "serve":
+        PreBuild(wd)
         Serve(wd)
+
+    case "help":
+        Helpers.Print("white", "Arguments:")
+        Helpers.Print("white", "\tbuild - Build your website")
+        Helpers.Print("white", "\tnew   - Create basic folder structure for new projects")
+        Helpers.Print("white", "\twatch - Watch for file changes and build when they are changed")
+        Helpers.Print("white", "\tserve - Host website on local web server, and watch for changes")
+        fmt.Println("")
 
     default:
         (Errors.NewFatal("Unknown argument: ", argument)).Handle()
