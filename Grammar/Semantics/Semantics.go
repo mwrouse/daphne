@@ -6,8 +6,11 @@ import (
     "daphne/Grammar"
     "daphne/Grammar/Operators"
     "daphne/DataTypes"
+    "regexp"
 )
 
+
+var variableRegex, _ = regexp.Compile("^([a-z])+(\\.[a-z]+)+$")
 
 /**
  * Evaluates something to true when given the current state
@@ -30,6 +33,13 @@ func IsTrue(inp string, ProgramState *State.CompilerState) (bool) {
         val := ""
         if ProgramState.Exists(inp) {
             val = ProgramState.Get(inp)
+            Helpers.Print("Cyan", inp, " = ", val)
+        } else {
+            if variableRegex.MatchString(Helpers.Trim(Helpers.ToLower(inp))) {
+                Helpers.Print("red", inp)
+                return false;
+            }
+            Helpers.Print("Yellow", inp)
         }
 
         val = Helpers.Trim(Helpers.ToLower(val))
@@ -55,11 +65,13 @@ func EvaluateTernary(ternary string, ProgramState *State.CompilerState) (string)
         return ternary
     }
 
+    Helpers.Print("Yellow", "Ternary: ", ternary)
+
     // It is a ternary, check if the true or false are ternarys, and keep going deeper
     isFalseTernary, _, _, _ := Grammar.IsTernary(ifFalse)
     if isFalseTernary {
         ifFalse = EvaluateTernary(ifFalse, ProgramState) // Recursively solve this
-    } 
+    }
 
     // Now check if the true statement is a ternary
     isTrueTernary, _, _, _ := Grammar.IsTernary(ifTrue)
@@ -172,6 +184,10 @@ func EvaluateVariable(variable string, ProgramState *State.CompilerState) (strin
     // Remove quotes from string literals
     if Grammar.IsStringLit(variable) {
         variable = Helpers.StripQuotes(variable)
+    } else {
+        if variableRegex.MatchString(Helpers.Trim(Helpers.ToLower(variable))) {
+            return ""
+        }
     }
 
     return variable

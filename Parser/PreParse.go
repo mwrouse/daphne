@@ -29,7 +29,6 @@ func PreparseFiles(dir string, ProgramState *State.CompilerState) {
             name := ProgramState.Path(file.Directory + "\\" + file.Info.Name())
             nameSplit := Helpers.Split(name, ".")
             ext := nameSplit[len(nameSplit) - 1]
-
             dest := ProgramState.OutputPath(name)
 
             if ext == "html" || ext == "htm" {
@@ -42,6 +41,17 @@ func PreparseFiles(dir string, ProgramState *State.CompilerState) {
                     if !err.IsFatal() {
                         ProgramState.Special["site.posts"] = append(ProgramState.Special["site.posts"], page)
                     }
+                } else if Helpers.Substring(file.Directory, 0, 0) == "_" {
+                    dirPath := Helpers.Split(file.Directory, "\\")
+                    varName := Helpers.Join(dirPath, ".")
+                    varName = "site." + Helpers.Substring(varName, 1, len(varName) - 1)
+
+                    page, err := ParsePage(name, ProgramState)
+                    err.Handle()
+
+                    // Copy into variable
+                    ProgramState.Special[varName] = append(ProgramState.Special[varName], page)
+
                 } else {
                     // Regular page
                     page, err := ParsePage(name, ProgramState)

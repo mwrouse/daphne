@@ -261,10 +261,151 @@ func ExpandContent(content *[]string, ProgramState *State.CompilerState) {
             }
         }
 
+        inForEachLoop := false
+        if cmdStack.Length() > 0 {
+            inForEachLoop = (cmdStack.Peek()).Control == "foreach"
+        }
+
+
+        // Only process if statements, foreach loops, and print commands if you are not inside of a foreach loop
+        if !inForEachLoop {
+            // Check for an inline print statement
+            inlinePrints := Grammar.FindInlinePrints(line)
+
+            if len(inlinePrints) > 0 {
+                // Evaluate all of the inline commands
+                for _, cmd := range inlinePrints {
+                    evaluated := Semantics.EvaluatePrintCommand(cmd, ProgramState)
+
+                    page[i] = Helpers.Replace(page[i], cmd, evaluated)
+                    line = Helpers.Trim(page[i])
+                }
+
+                // Breakup line breaks after evaluating the print command (specifically for {{ content }} or {{ *.excerpt }})
+                expanded := Helpers.Split(line, "\n")
+                if len(expanded) > 1 {
+                    Helpers.Remove(&page, i, i)
+                    Helpers.Inject(&page, expanded, i)
+                    ExpandContent(&page, ProgramState)
+                    break;
+                }
+
+            // Look for command that ends something
+            } else if Grammar.EndsMultilineCommand(line) {
+                whatItEnds := Grammar.WhatDoesEndCommandEnd(line) // Find out what it ends
+
+                // Pull command from stack
+                cmd, _ := cmdStack.Pop()
+                cmd.EndLine = i
+                cmd.State = 0
+
+                // Only process if it ends the command on top of the stack
+                if whatItEnds == cmd.Control {
+                    toInject := []string{}
+
+                    // Process if statement
+                    if cmd.Control == "if" {
+                        // Evaluate Conditional
+                        if Semantics.IsTrue(cmd.Condition, ProgramState) {
+                            toInject = cmd.IfTrue
+                        } else {
+                            toInject = cmd.IfFalse
+                        }
+
+                        // Inject the evaluated if statement where the raw if statement was
+                        Helpers.Remove(&page, cmd.StartLine, cmd.EndLine)
+                        Helpers.Inject(&page, toInject, cmd.StartLine)
+
+                        ExpandContent(&page, ProgramState)
+                        break; // Do not continue processes, the recursive call above will do that
+                    }
+                } else {
+                    cmdStack.Push(cmd) // Put back onto the stack if not ending the topmost command
+                }
+
+            // Check if the line starts a multiline command (if, foreach)
+            } else if Grammar.StartsMultilineCommand(line) {
+                cmd := Semantics.GetCommand(line)
+                cmd.StartLine = i
+
+                cmdStack.Push(cmd)
+                partOfCmd = true // Do not add this line to the command ifTrue/ifFalse
+            }
+        } else { // End if !inForEachLoop
+            if Grammar.EndsMultilineCommand(line) {
+                whatItEnds := Grammar.WhatDoesEndCommandEnd(line) // Find out what it ends
+
+                // Pull command from stack
+                cmd, _ := cmdStack.Pop()
+                cmd.EndLine = i
+                cmd.State = 0
+
+                // Only process if it ends the command on top of the stack
+                if whatItEnds == cmd.Control {
+                    if cmd.Control == "foreach" {
+                        // Perform foreach
+                        variable, alias := Semantics.ParseForEachCondition(cmd.Condition)
+
+                        foreachResult := []string{}
+
+                        for _, pg := range ProgramState.GetSpecial(variable) {
+                            // Rename the meta keys to the alias specified in the foreach loop
+                            newMeta := make(map[string]string)
+                            for key, val := range pg.Meta {
+                                keys := Helpers.Split(key, ".")
+                                newKey := keys[0]
+
+                                if len(keys) > 1 {
+                                    newKey = alias + "." + Helpers.Join(keys[1:], ".")
+                                }
+                                newMeta[newKey] = val
+                            }
+
+                            thisLoop := Helpers.Copy(cmd.IfTrue)
+
+                            // Push the new meta to the meta stack, and evaluate the for each loop
+                            ProgramState.Meta.Push(newMeta)
+                            ExpandContent(&thisLoop, ProgramState)
+                            ProgramState.Meta.Pop()
+
+                            // Add to the foreach loop results
+                            foreachResult = append(thisLoop, foreachResult...)
+                        }
+
+                        // Display the foreach loop results
+                        Helpers.Remove(&page, cmd.StartLine, cmd.EndLine)
+                        Helpers.Inject(&page, foreachResult, cmd.StartLine)
+
+                        ExpandContent(&page, ProgramState)
+                        break;
+                    }
+
+                } else {
+                    cmdStack.Push(cmd) // Put back onto the stack if not ending the topmost command
+                }
+            }
+        }
+
+        // Add line to the command at the top of the stack if there is one
+        if cmdStack.Length() > 0 && !partOfCmd {
+            cmd, _ := cmdStack.Pop()
+
+            if cmd.State == 0 {
+                cmd.IfTrue = append(cmd.IfTrue, origLine)
+            } else if cmd.State == 1 {
+                cmd.IfFalse = append(cmd.IfFalse, origLine)
+            }
+
+            cmdStack.Push(cmd)
+        }
+
+
+
+/*
         // Check for an inline print statement
         inlinePrints := Grammar.FindInlinePrints(line)
 
-        if len(inlinePrints) > 0 && (cmdStack.Peek()).Control != "foreach" {
+        if len(inlinePrints) > 0 && !inForEachLoop { // Leaves print commands inside for-each loop
             // Evaluate all of the inline commands
             for _, cmd := range inlinePrints {
                 evaluated := Semantics.EvaluatePrintCommand(cmd, ProgramState)
@@ -290,57 +431,65 @@ func ExpandContent(content *[]string, ProgramState *State.CompilerState) {
 
             toInject := []string{}
 
-            if cmd.Control == "if" {
-                // Evaluate Conditional
-                if Semantics.IsTrue(cmd.Condition, ProgramState) {
-                    toInject = cmd.IfTrue
-                } else {
-                    toInject = cmd.IfFalse
-                }
-                Helpers.Remove(&page, cmd.StartLine, cmd.EndLine)
-                Helpers.Inject(&page, toInject, cmd.StartLine)
+            whatItEnds := Grammar.WhatDoesEndCommandEnd(line)
 
-                ExpandContent(&page, ProgramState)
-                break;
+            if whatItEnds == cmd.Control {
+                if cmd.Control == "if" && !inForEachLoop {
+                    // Evaluate Conditional
+                    if Semantics.IsTrue(cmd.Condition, ProgramState) {
+                        Helpers.Print("Yellow", cmd.Condition)
+                        toInject = cmd.IfTrue
+                    } else {
+                        toInject = cmd.IfFalse
+                    }
+                    Helpers.Remove(&page, cmd.StartLine, cmd.EndLine)
+                    Helpers.Inject(&page, toInject, cmd.StartLine)
 
-            } else if cmd.Control == "foreach" {
-                // Perform foreach
-                variable, alias := Semantics.ParseForEachCondition(cmd.Condition)
+                    ExpandContent(&page, ProgramState)
+                    break;
 
-                foreachResult := []string{}
+                } else if cmd.Control == "foreach" {
+                    // Perform foreach
+                    variable, alias := Semantics.ParseForEachCondition(cmd.Condition)
 
-                for _, pg := range ProgramState.GetSpecial(variable) {
-                    // Rename the meta keys to the alias specified in the foreach loop
-                    newMeta := make(map[string]string)
-                    for key, val := range pg.Meta {
-                        keys := Helpers.Split(key, ".")
-                        newKey := keys[0]
+                    foreachResult := []string{}
 
-                        if len(keys) > 1 {
-                            newKey = alias + "." + Helpers.Join(keys[1:], ".")
+                    for _, pg := range ProgramState.GetSpecial(variable) {
+                        // Rename the meta keys to the alias specified in the foreach loop
+                        Helpers.Print("Green", pg.Meta["page.file"])
+                        newMeta := make(map[string]string)
+                        for key, val := range pg.Meta {
+                            keys := Helpers.Split(key, ".")
+                            newKey := keys[0]
+
+                            if len(keys) > 1 {
+                                newKey = alias + "." + Helpers.Join(keys[1:], ".")
+                            }
+                            newMeta[newKey] = val
                         }
-                        newMeta[newKey] = val
 
+                        thisLoop := Helpers.Copy(cmd.IfTrue)
+                        for _, ln := range thisLoop {
+                            Helpers.Print("red", "\t", ln)
+                        }
+                        // Push the new meta to the meta stack, and evaluate the for each loop
+                        ProgramState.Meta.Push(newMeta)
+                        ExpandContent(&thisLoop, ProgramState)
+                        ProgramState.Meta.Pop()
+
+                        // Add to the foreach loop results
+                        foreachResult = append(thisLoop, foreachResult...)
                     }
 
-                    thisLoop := Helpers.Copy(cmd.IfTrue)
-
-                    // Push the new meta to the meta stack, and evaluate the for each loop
-                    ProgramState.Meta.Push(newMeta)
-                    ExpandContent(&thisLoop, ProgramState)
-                    ProgramState.Meta.Pop()
-
-                    // Add to the foreach loop results
-                    foreachResult = append(thisLoop, foreachResult...)
+                    // Display the foreach loop results
+                    Helpers.Remove(&page, cmd.StartLine, cmd.EndLine)
+                    Helpers.Inject(&page, foreachResult, cmd.StartLine)
+                    ExpandContent(&page, ProgramState)
+                    break;
                 }
-
-                // Display the foreach loop results
-                Helpers.Remove(&page, cmd.StartLine, cmd.EndLine)
-                Helpers.Inject(&page, foreachResult, cmd.StartLine)
-                ExpandContent(&page, ProgramState)
-                break;
+            } else {
+                cmdStack.Push(cmd)
             }
-            partOfCmd = true
 
         // Check for else statement
         } else if Grammar.StartsElseCommand(line) {
@@ -357,11 +506,15 @@ func ExpandContent(content *[]string, ProgramState *State.CompilerState) {
 
         // Check if the line starts a multiline command (if, while, etc...)
         } else if Grammar.StartsMultilineCommand(line) {
-            cmd := Semantics.GetCommand(line)
-            cmd.StartLine = i
+            if !inForEachLoop {
+                cmd := Semantics.GetCommand(line)
+                cmd.StartLine = i
 
-            cmdStack.Push(cmd)
-            partOfCmd = true
+                cmdStack.Push(cmd)
+                partOfCmd = false
+            } else {
+                Helpers.Print("Green", "\t", line)
+            }
         }
 
         // Add line to the command at the top of the stack if there is one
@@ -375,7 +528,7 @@ func ExpandContent(content *[]string, ProgramState *State.CompilerState) {
 
             cmdStack.Push(cmd)
         }
-
+*/
         partOfCmd = false
     } // End loop through lines
 

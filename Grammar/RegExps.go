@@ -28,20 +28,11 @@ func RegexConstructor() (*DaphneConfigRegex, *DaphneMetaRegex) {
 }
 
 var ConfigRegex, MetaRegex = RegexConstructor()
-/*
-var ConfigRegex = DaphneConfigRegex{}
-ConfigRegex.SectionBegin, _     = regexp.Compile("^(?:\")?([A-Za-z]+)?(?:\")?(?:\\s)*:(?:\\s)*{(?:\\s)*$")
-ConfigRegex.SectionEnd, _       = regexp.Compile("^(?:\\s)*}(?:\\s)*(?:,)?(?:\\s)*$")
-ConfigRegex.VariableSet, _      = regexp.Compile("^(?:\\s)*(?:\")?([A-Za-z_]+)(?:\")?(?:\\s)*:(?:\\s)*(.*)?(?:\\s)*(?:,)?$")
-ConfigRegex.Comment, _          = regexp.Compile("^(?:\\s)*#(.*)?$")
-*/
 
 type DaphneMetaRegex struct {
     VariableSet     *regexp.Regexp
 }
 
-//var MetaRegex = DaphneMetaRegex{}
-//MetaRegex.VariableSet = ConfigRegex.VariableSet
 
 
 var ConditionalRegex, _     = regexp.Compile("^(?:\\s)*(.*)?(?:\\s)"  + Operators.Comparison.All + "(?:\\s)(.*)?(?:\\s)*$")

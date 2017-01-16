@@ -42,7 +42,7 @@ func main() {
     fmt.Println("")
 
     argument := "build"
-    if len(os.Args) > 0 {
+    if len(os.Args) > 1 {
         argument = Helpers.ToLower(os.Args[1])
     }
 
@@ -130,6 +130,7 @@ func Build(wd string) {
   * Description..: Watches for file changes in an infinite loop
   */
 func Watch(wd string) {
+    Build(wd)
     Helpers.Print("White", "Monitoring...")
     for {
         // Watch for file changes, build if one has changed
@@ -188,7 +189,6 @@ func Serve(wd string) {
 func FileWatch(dir string) (bool) {
     files := FileSystem.CollapseDirectory(dir, "", true) // Get all the files in the directory
 
-    newFile := false
     for _, file := range files {
         if ProgramState.IgnoreDirDuringWatch(file.Directory) {
             continue
@@ -208,10 +208,9 @@ func FileWatch(dir string) (bool) {
                 }
             } else {
                 fileWatch[name] = file.Info.ModTime()
-                newFile = true
             }
         }
     }
 
-    return newFile
+    return false
 }

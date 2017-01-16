@@ -210,3 +210,19 @@ func URLSafe(toConvert string) (string) {
 
     return url
 }
+
+
+
+func Substring(str string, start int, end int) (string) {
+    result := ""
+    for i, c := range str {
+        if i >= start && i <= end {
+            result = result + string(c)
+
+            if i == end {
+                break;
+            }
+        }
+    }
+    return result
+}

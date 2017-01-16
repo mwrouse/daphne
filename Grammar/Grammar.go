@@ -491,3 +491,33 @@ func EndsMultilineCommand(line string) (bool) {
 
     return false
 }
+
+/**
+  * Name.........: EndsMultilineCommand
+  * Parameters...: line (string) - the line to search
+  * Return.......: boolean
+  * Description..: Determines if a line is an end statement
+  */
+func WhatDoesEndCommandEnd(line string) (string) {
+    line = Helpers.Strip(line)
+
+    if len(line) < 9 {
+        return "" // Not long enough
+    }
+
+    if line[:2] == "{%" && line[len(line) - 2:] == "%}" {
+        line = Helpers.Trim(line[2:len(line) - 2]) // Remove tags
+
+        tokens := Helpers.Split(line, " ")
+
+        if len(tokens) < 2 {
+            return ""
+        }
+
+        if tokens[0] == "end" {
+            return Helpers.Trim(tokens[1])
+        }
+    }
+
+    return ""
+}
