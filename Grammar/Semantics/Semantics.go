@@ -33,13 +33,10 @@ func IsTrue(inp string, ProgramState *State.CompilerState) (bool) {
         val := ""
         if ProgramState.Exists(inp) {
             val = ProgramState.Get(inp)
-            Helpers.Print("Cyan", inp, " = ", val)
         } else {
             if variableRegex.MatchString(Helpers.Trim(Helpers.ToLower(inp))) {
-                Helpers.Print("red", inp)
                 return false;
             }
-            Helpers.Print("Yellow", inp)
         }
 
         val = Helpers.Trim(Helpers.ToLower(val))
@@ -64,8 +61,6 @@ func EvaluateTernary(ternary string, ProgramState *State.CompilerState) (string)
     if !isTernary {
         return ternary
     }
-
-    Helpers.Print("Yellow", "Ternary: ", ternary)
 
     // It is a ternary, check if the true or false are ternarys, and keep going deeper
     isFalseTernary, _, _, _ := Grammar.IsTernary(ifFalse)
