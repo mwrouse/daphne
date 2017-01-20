@@ -12,6 +12,7 @@ import (
     "daphne/Grammar/Operators"
     "daphne/Helpers"
     "daphne/DataTypes"
+    "daphne/State"
 )
 
 
@@ -239,96 +240,113 @@ func IsLogicalCondition(condition string) (bool, string, string, string) {
  * Returns true if a ternary statement
  */
 func IsTernary(line string) (bool, string, string, string) {
-    state := 0
 
     condition := ""
     ifTrue := ""
     ifFalse := ""
 
-    waitingFor := DataTypes.StringStack{}
     returnToState := 0
 
-    lastLetter := ""
+    sm := State.NewStateMachine(0)
 
-    for _, c := range line {
-        letter := string(c)
+    // State 0 - Reading the condition
+    sm.AddState(0, func (inp string, lastInp string, stack *DataTypes.DataStack) (int) {
+        state := 0
 
-        switch (state) {
-        case 0:
-            if letter == "'" || letter == "\"" {
-                state = 1
-                waitingFor.Push(letter)
-            } else if letter == "(" {
-                state = 1
-                waitingFor.Push(")")
-            } else if letter == "?" {
-                state = 2
-            }
-
-            if state != 2 {
-                condition = condition + letter
-            }
-            returnToState = 0
-
-        // Waiting to get out of something
-        case 1:
-            if letter == waitingFor.Peek() && lastLetter != "\\" {
-                _, length := waitingFor.Pop()
-                if length <= 0 {
-                    state = returnToState // Only return when no more items are on the stack to be waiting
-                }
-            } else if letter == "'" || letter == "\"" {
-                waitingFor.Push(letter)
-            } else if letter == "(" {
-                waitingFor.Push(")")
-            }
-
-            if returnToState == 0 {
-                condition = condition + letter
-            } else if returnToState == 2 {
-                ifTrue = ifTrue + letter
-            } else if returnToState == 3 {
-                ifFalse = ifFalse + letter
-            }
-
-        // Reading the ifTrue
-        case 2:
-            if letter == "'" || letter == "\"" {
-                state = 1
-                waitingFor.Push(letter)
-            } else if letter == "(" {
-                state = 1
-                waitingFor.Push(")")
-            } else if letter == "?" {
-                state = 1
-                waitingFor.Push(":")
-            } else if letter == ":"{
-                state = 3
-            }
-
-            if state != 3 {
-                ifTrue = ifTrue + letter
-            }
-            returnToState = 2
-
-        // Reading the if false
-        case 3:
-            if letter == "'" || letter == "\"" {
-                state = 1
-                waitingFor.Push(letter)
-            } else if letter == "(" {
-                state = 1
-                waitingFor.Push(")")
-            }
-
-            ifFalse = ifFalse + letter
-
-            returnToState = 3
+        if (inp == "'" || inp == "\"") && lastInp != "\\" {
+            state = 1
+            stack.Push(inp)
+        } else if inp == "(" && lastInp != "\\" {
+            state = 1
+            stack.Push(")")
+        } else if inp == "?" && lastInp != "\\" {
+             state = 2 // Go to state 2
         }
-        lastLetter = letter
-    }
 
-    return (state == 3 && waitingFor.Length() == 0), Helpers.Strip(condition), Helpers.Trim(Helpers.StripParens(ifTrue)), Helpers.Trim(Helpers.StripParens(ifFalse))
+        // Add to the condition if the next state is not 2
+        if state != 2 {
+            condition = condition + inp
+        }
+
+        returnToState = 0
+        return state
+    })
+
+    // State 1 - Waiting for the end of somthing (parenthesis, quotes)
+    sm.AddState(1, func (inp string, lastInp string, stack *DataTypes.DataStack) (int) {
+        state := 1
+
+        if inp == stack.Peek() && lastInp != "\\" {
+            stack.Pop() // Remove item from stack
+            if stack.Length() < 1 {
+                state = returnToState // Only return to the previous state when there is no more left
+            }
+        } else if (inp == "'" || inp == "\"") && lastInp != "\\" {
+            stack.Push(inp) // Wait for these to end
+        } else if inp == "(" && lastInp != "\\" {
+            stack.Push(")") // Wait for parenthesis to end
+        }
+
+        // Append to the appropriate place
+        if returnToState == 0 {
+            condition = condition + inp
+        } else if returnToState == 2 {
+            ifTrue = ifTrue + inp
+        } else if returnToState == 3 {
+            ifFalse = ifFalse + inp
+        }
+
+        return state
+    })
+
+    // State 2 - Reading the true part of the ternary
+    sm.AddState(2, func (inp string, lastInp string, stack *DataTypes.DataStack) (int) {
+        state := 2
+        if (inp == "'" || inp == "\"") && lastInp != "\\" {
+            state = 1
+            stack.Push(inp)
+        } else if inp == "(" && lastInp != "\\" {
+            state = 1
+            stack.Push(")")
+        } else if inp == "?" && lastInp != "\\" {
+            state = 1
+            stack.Push(":") // Possible ternary operator inside the if part of the ternary
+        } else if inp == ":" && lastInp != "\\" {
+            state = 3
+        }
+
+        // Add to the if true part if not going to state 3
+        if state != 3 {
+            ifTrue = ifTrue + inp
+        }
+
+        returnToState = 2
+        return state
+    })
+
+    // State 3 - Final State - Reading the false part of the ternary
+    sm.AddFinalState(3, func (inp string, lastInp string, stack *DataTypes.DataStack) (int) {
+        state := 3
+        if (inp == "'" || inp == "\"") && lastInp != "\\" {
+            state = 1
+            stack.Push(inp)
+        } else if inp == "(" && lastInp != "\\" {
+            state = 1
+            stack.Push(")")
+        }
+
+        ifFalse = ifFalse + inp // Add everything to the if false
+
+        returnToState = 3
+        return state
+    })
+
+    // Run the state machine
+    result, err := sm.Run(line)
+    err.Handle()
+
+
+    return result, Helpers.Strip(condition), Helpers.Trim(Helpers.StripParens(ifTrue)), Helpers.Trim(Helpers.StripParens(ifFalse))
 }
 
 
