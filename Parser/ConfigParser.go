@@ -39,6 +39,10 @@ import (
      // Apply defaults
      ApplyDefaultConfigOptions(config)
 
+     if config["compiler.ignore"] != "" {
+         ProgramState.Ignore = append(ProgramState.Ignore, Helpers.Split(config["compiler.ignore"], ",")...)
+     }
+
      // Add to the compiler state
      ProgramState.Config = config
      return Errors.None() // No error
@@ -136,6 +140,7 @@ func ParseConfig(contents []string) (map[string]string, Errors.Error) {
 
              // Put into configuration
              config[currentSection + "." + matches[1]] = matches[2]
+
 
          // Section End
          case  Grammar.ConfigRegex.SectionEnd.MatchString(line):

@@ -11,6 +11,7 @@ import (
 type CompilerState struct {
     Config  map[string]string
     Special map[string][]DataTypes.Page
+    Ignore []string
 
     CurrentPage DataTypes.Page
     Meta    DataTypes.MetaStack
@@ -25,6 +26,7 @@ func NewCompilerState() (*CompilerState) {
 
     state.Config = make(map[string]string)
     state.Meta = DataTypes.MetaStack{}
+    state.Ignore = []string{}
 
     return state;
 }
@@ -115,6 +117,13 @@ func (self CompilerState) IgnoreDir(dir string) (bool) {
 
     if dir[:1] == "_"  {
         dir = dirPath[0]
+
+        for _, fldr := range self.Ignore {
+            if fldr == dir {
+                return true;
+            }
+        }
+
         return dir == self.Config["compiler.include_dir"] || dir == self.Config["compiler.template_dir"] || dir == self.Config["compiler.output"]
     }
     return (dir[:1] == "." && len(dir) > 1)
@@ -130,6 +139,13 @@ func (self CompilerState) IgnoreDirDuringWatch(dir string) (bool) {
 
     if dir[:1] == "_"  {
         dir = dirPath[0]
+
+        for _, fldr := range self.Ignore {
+            if fldr == dir {
+                return true;
+            }
+        }
+        
         return dir == self.Config["compiler.output"]
     }
     return (dir[:1] == "." && len(dir) > 1)

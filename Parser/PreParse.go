@@ -41,6 +41,8 @@ func PreparseFiles(dir string, ProgramState *State.CompilerState) {
                     if !err.IsFatal() {
                         ProgramState.Special["site.posts"] = append(ProgramState.Special["site.posts"], page)
                     }
+                    
+                // If the directory starts with an underscore count it as a special parameter
                 } else if Helpers.Substring(file.Directory, 0, 0) == "_" {
                     dirPath := Helpers.Split(file.Directory, "\\")
                     varName := Helpers.Join(dirPath, ".")
