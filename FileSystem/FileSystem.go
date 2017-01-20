@@ -104,21 +104,21 @@ func WriteFile (path string, contents []string) (Errors.Error) {
 func CopyFile(src, dst string) (Errors.Error) {
     sfi, err := os.Stat(src)
     if err != nil {
-        return Errors.NewFatal(err.Error())
+        return Errors.NewWarning(err.Error())
     }
     if !sfi.Mode().IsRegular() {
         // cannot copy non-regular files (e.g., directories,
         // symlinks, devices, etc.)
-        return Errors.NewFatal("CopyFile: non-regular source file ", sfi.Name(), "(", sfi.Mode().String(), ")")
+        return Errors.NewWarning("CopyFile: non-regular source file ", sfi.Name(), "(", sfi.Mode().String(), ")")
     }
     dfi, err := os.Stat(dst)
     if err != nil {
         if !os.IsNotExist(err) {
-            return Errors.NewFatal(err.Error())
+            return Errors.NewWarning(err.Error())
         }
     } else {
         if !(dfi.Mode().IsRegular()) {
-            return Errors.NewFatal("CopyFile: non-regular destination file ", dfi.Name(), "(", dfi.Mode().String(), ")")
+            return Errors.NewWarning("CopyFile: non-regular destination file ", dfi.Name(), "(", dfi.Mode().String(), ")")
         }
         if os.SameFile(sfi, dfi) {
             return Errors.None()
