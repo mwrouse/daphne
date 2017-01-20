@@ -215,6 +215,15 @@ func ExpandPage(pageInfo *DataTypes.Page, ProgramState *State.CompilerState) (Er
     // Write to the output directory
     err = FileSystem.WriteFile(page.OutFile, contents)
 
+    // Perform after file write
+    for len(ProgramState.PerformAfterFileWrite) > 0 {
+        fn := ProgramState.PerformAfterFileWrite[len(ProgramState.PerformAfterFileWrite) - 1]
+
+        fn(page, ProgramState) // Perform the callback
+        
+        ProgramState.PerformAfterFileWrite = ProgramState.PerformAfterFileWrite[:len(ProgramState.PerformAfterFileWrite) - 1]
+    }
+
     return err
 }
 

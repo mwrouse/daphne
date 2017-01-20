@@ -226,3 +226,25 @@ func Substring(str string, start int, end int) (string) {
     }
     return result
 }
+
+
+func IsInsideDir(toCheck string, dir string) (bool) {
+    path := Split(toCheck, "\\")
+    dirPath := Split(dir, "\\")
+
+    if len(path) < len(dirPath) {
+        return false
+    }
+
+    for i, d := range dirPath {
+        d = Trim(d)
+        path[i] = Trim(path[i])
+
+        if d != path[i] {
+            return false
+        }
+    }
+
+    return true
+
+}

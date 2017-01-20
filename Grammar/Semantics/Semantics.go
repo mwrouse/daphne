@@ -6,6 +6,7 @@ import (
     "daphne/Grammar"
     "daphne/Grammar/Operators"
     "daphne/DataTypes"
+    "daphne/FileSystem"
     "regexp"
 )
 
@@ -202,9 +203,64 @@ func EvaluatePrintCommand(command string, ProgramState *State.CompilerState) (st
         return result
     }
 
-    eval := EvaluateVariable(EvaluateTernary(result, ProgramState), ProgramState)
+    eval := ""
+
+    // Check if a special function
+    if Grammar.IsSpecialFunc(result) {
+        // Evaluate as a function
+        eval = EvaluateFunction(result, ProgramState)
+    } else {
+        // Evaluate not as a function
+        eval = EvaluateVariable(EvaluateTernary(result, ProgramState), ProgramState)
+    }
 
     return eval
+}
+
+
+/**
+  * Name.........: EvaluateFunction
+  * Parameters...: line (string) - the function to validate
+  *                ProgramState (*State.CompilerState) - The program state
+  * Return.......: string
+  * Description..: Evaluates a function
+  */
+func EvaluateFunction(line string, ProgramState *State.CompilerState) (string) {
+    eval := ""
+
+    isValid, funcName, funcParam := Grammar.IsSpecialFunction(line)
+
+    // Return the line if it is not a valid function
+    if !isValid {
+        return line
+    }
+
+    // Handle the function
+    switch (funcName) {
+    case "post_image":
+        funcParams := Helpers.Split(funcParam, ",")
+        eval = Helpers.Trim(funcParams[0])
+
+        // Register the function to move the image file after parsing
+        ProgramState.PerformAfterFileWrite = append(ProgramState.PerformAfterFileWrite, CopyPostImages(funcParams))
+    }
+
+    return eval
+}
+
+
+func CopyPostImages(images []string) (State.SpecialFunction) {
+    return func (page DataTypes.Page, ProgramState *State.CompilerState) {
+        // Copy all of the images
+        for _, img := range images {
+            dir := Helpers.Split(page.OutFile, "\\")
+            dest := Helpers.Join(dir[:len(dir) - 1], "\\") + "\\" + img
+
+            // Copy the image into the path of the final post
+            err := FileSystem.CopyFile(ProgramState.Config["compiler.posts_image_dir"] + "\\" + page.GetSlug() + "\\" + img, dest)
+            err.Handle()
+        }
+    }
 }
 
 

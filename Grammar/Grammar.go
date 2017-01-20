@@ -345,8 +345,80 @@ func IsTernary(line string) (bool, string, string, string) {
     result, err := sm.Run(line)
     err.Handle()
 
-
     return result, Helpers.Strip(condition), Helpers.Trim(Helpers.StripParens(ifTrue)), Helpers.Trim(Helpers.StripParens(ifFalse))
+}
+
+
+var validFunctions = []string{"post_image"}
+
+/**
+  * Name.........: IsSpecialFunction
+  * Parameters...: line (string) - the line to check if it is a special function
+  * Return.......: boolean, string, string
+  * Description..: determines if a line is a special function or not
+  */
+func IsSpecialFunction(line string) (bool, string, string) {
+    funcName := ""
+    funcParams := ""
+
+    sm := State.NewStateMachine(0)
+
+    // State 0 - looking for opening parens
+    sm.AddState(0, func(inp string, lastInp string, stack *DataTypes.DataStack) (int) {
+        state := 0
+
+        if inp == "(" {
+            state = 1
+        } else {
+            funcName = funcName + inp
+        }
+
+        return state
+    })
+
+    // State 1 - Looking for closing parenthesis
+    sm.AddState(1, func(inp string, lastInp string, stack *DataTypes.DataStack) (int) {
+        state := 1
+
+        if inp == ")" {
+            state = 2
+        } else {
+            funcParams = funcParams + inp
+        }
+
+        return state
+    })
+
+    // State 2 - making sure nothing else happens
+    sm.AddFinalState(2, func(inp string, lastInp string, stack *DataTypes.DataStack) (int) {
+        if inp != "" {
+            return 0
+        }
+        return 2
+    })
+
+
+    // Run the state machine
+    result, err := sm.Run(line)
+    err.Handle()
+
+    // Validate function name
+    funcIsValid := false
+    for _, name := range validFunctions {
+        if name == funcName {
+            funcIsValid = true
+            break
+        }
+    }
+
+    return result && funcIsValid, funcName, Helpers.Trim(funcParams)
+}
+
+// Shorthand
+func IsSpecialFunc(line string) (bool) {
+    result, _, _ := IsSpecialFunction(line)
+
+    return result
 }
 
 

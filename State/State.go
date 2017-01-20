@@ -5,6 +5,9 @@ import (
     "daphne/Helpers"
 )
 
+type SpecialFunction func(DataTypes.Page, *CompilerState)
+
+
 /**
  * A struct to represent the current State
  */
@@ -15,8 +18,9 @@ type CompilerState struct {
 
     CurrentPage DataTypes.Page
     Meta    DataTypes.MetaStack
-}
 
+    PerformAfterFileWrite []SpecialFunction
+}
 
 /**
  * Compiler State Constructor
@@ -27,6 +31,8 @@ func NewCompilerState() (*CompilerState) {
     state.Config = make(map[string]string)
     state.Meta = DataTypes.MetaStack{}
     state.Ignore = []string{}
+
+    state.PerformAfterFileWrite = []SpecialFunction{}
 
     return state;
 }
@@ -113,19 +119,23 @@ func (self CompilerState) IgnoreDir(dir string) (bool) {
         return false
     }
 
-    dirPath := Helpers.Split(dir, "\\")
+    //dirPath := Helpers.Split(dir, "\\")
 
+    for _, fldr := range self.Ignore {
+        if Helpers.IsInsideDir(dir, fldr) {
+            return true
+        }
+    }
+    /*
     if dir[:1] == "_"  {
-        dir = dirPath[0]
+        dir2 := dirPath[0]
 
         for _, fldr := range self.Ignore {
-            if fldr == dir {
+            if Helpers.HasDir(dir, fldr) {
                 return true;
             }
-        }
+        }*/
 
-        return dir == self.Config["compiler.include_dir"] || dir == self.Config["compiler.template_dir"] || dir == self.Config["compiler.output"]
-    }
     return (dir[:1] == "." && len(dir) > 1)
 }
 
@@ -140,12 +150,6 @@ func (self CompilerState) IgnoreDirDuringWatch(dir string) (bool) {
     if dir[:1] == "_"  {
         dir = dirPath[0]
 
-        for _, fldr := range self.Ignore {
-            if fldr == dir {
-                return true;
-            }
-        }
-        
         return dir == self.Config["compiler.output"]
     }
     return (dir[:1] == "." && len(dir) > 1)

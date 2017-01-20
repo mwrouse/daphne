@@ -55,13 +55,21 @@ import (
   * Description..: Adds default options to a configuration if they do not exist
   */
 func ApplyDefaultConfigOptions(config map[string]string) {
-    defaults := map[string]string{"compiler.source": ".", "compiler.output": "_build", "site.template": "default", "compiler.template_dir": "_templates", "compiler.include_dir": "_includes", "compiler.posts_dir": "_posts", "compiler.drafts_dir": "_posts/_drafts","compiler.tags.meta":"---","compiler.tags.opening": "{%", "compiler.tags.closing": "%}", "compiler.tags.print.opening": "{{", "compiler.tags.print.closing": "}}", "blog.permalink": "/blog/%slug%", "blog.foldericize": "true", "blog.excerpt":"<!-- more -->"}
+    defaults := map[string]string{"compiler.source": ".", "compiler.output": "_build", "site.template": "default", "compiler.template_dir": "_templates", "compiler.include_dir": "_includes", "compiler.posts_dir": "_posts", "compiler.posts_image_dir": "_posts\\images", "compiler.drafts_dir": "_posts/_drafts","compiler.tags.meta":"---","compiler.tags.opening": "{%", "compiler.tags.closing": "%}", "compiler.tags.print.opening": "{{", "compiler.tags.print.closing": "}}", "blog.permalink": "/blog/%slug%", "blog.foldericize": "true", "blog.excerpt":"<!-- more -->"}
 
     for key, val := range defaults {
         if config[key] == "" {
             config[key] = val
         }
     }
+
+    // Add folders to ingore
+    toIgnore := []string{config["compiler.include_dir"], config["compiler.template_dir"], config["compiler.ouput"], config["compiler.posts_image_dir"]}
+    if config["compiler.ignore"] != "" {
+        config["compiler.ignore"] = config["compiler.ignore"] + ","
+    }
+    config["compiler.ignore"] = config["compiler.ignore"] + Helpers.Join(toIgnore, ",")
+
 
     if config["site.url"] != "" {
         if config["site.url"][len(config["site.url"]) - 1:] != "/" {
