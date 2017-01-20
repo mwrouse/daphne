@@ -201,7 +201,7 @@ func URLSafe(toConvert string) (string) {
 
     // Remove non-alphabetical characters
     for _, c := range old {
-        if c <= 122 && c >= 97 {
+        if (c <= 122 && c >= 97) || (c <= 57 && c >= 48) {
             url = url + string(c)
         } else if c == 32 {
             url = url + "-"

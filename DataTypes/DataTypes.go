@@ -19,7 +19,6 @@ type Page struct {
 func (self *Page) GetSlug() (string) {
     if self.IsBlogPost {
         return Helpers.URLSafe(self.Meta["page.title"])
-
     }
     return ""
 }
