@@ -64,7 +64,7 @@ func ApplyDefaultConfigOptions(config map[string]string) {
     }
 
     // Add folders to ingore
-    toIgnore := []string{config["compiler.include_dir"], config["compiler.template_dir"], config["compiler.ouput"], config["compiler.posts_image_dir"]}
+    toIgnore := []string{config["compiler.include_dir"], config["compiler.template_dir"], config["compiler.output"], config["compiler.posts_image_dir"]}
     if config["compiler.ignore"] != "" {
         config["compiler.ignore"] = config["compiler.ignore"] + ","
     }
