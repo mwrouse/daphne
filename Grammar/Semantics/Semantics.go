@@ -237,19 +237,19 @@ func EvaluateFunction(line string, ProgramState *State.CompilerState) (string) {
 
     // Handle the function
     switch (funcName) {
-    case "post_image":
+    case "post_asset":
         funcParams := Helpers.Split(funcParam, ",")
         eval = Helpers.Trim(funcParams[0])
 
         // Register the function to move the image file after parsing
-        ProgramState.PerformAfterFileWrite = append(ProgramState.PerformAfterFileWrite, CopyPostImages(funcParams))
+        ProgramState.PerformAfterFileWrite = append(ProgramState.PerformAfterFileWrite, CopyPostAsset(funcParams))
     }
 
     return eval
 }
 
 
-func CopyPostImages(images []string) (State.SpecialFunction) {
+func CopyPostAsset(images []string) (State.SpecialFunction) {
     return func (page DataTypes.Page, ProgramState *State.CompilerState) {
         // Copy all of the images
         for _, img := range images {
@@ -257,7 +257,7 @@ func CopyPostImages(images []string) (State.SpecialFunction) {
             dest := Helpers.Join(dir[:len(dir) - 1], "\\") + "\\" + img
 
             // Copy the image into the path of the final post
-            err := FileSystem.CopyFile(ProgramState.Config["compiler.posts_image_dir"] + "\\" + page.GetSlug() + "\\" + img, dest)
+            err := FileSystem.CopyFile(ProgramState.Config["compiler.posts_asset_dir"] + "\\" + page.GetSlug() + "\\" + img, dest)
             err.Handle()
         }
     }

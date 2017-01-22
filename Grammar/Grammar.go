@@ -349,7 +349,7 @@ func IsTernary(line string) (bool, string, string, string) {
 }
 
 
-var validFunctions = []string{"post_image"}
+var validFunctions = []string{"post_asset"}
 
 /**
   * Name.........: IsSpecialFunction
