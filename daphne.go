@@ -7,6 +7,7 @@ import (
     "daphne/FileSystem"
     "daphne/DataTypes"
     "daphne/Errors"
+    "bufio"
     "fmt"
     "os"
     "regexp"
@@ -43,33 +44,39 @@ func main() {
 
     argument := "build"
     if len(os.Args) > 1 {
-        argument = Helpers.ToLower(os.Args[1])
+        argument = Helpers.ToLower(Helpers.Join(os.Args[1:len(os.Args)], " "))
+    }
+    argument = Helpers.Trim(argument)
+
+    // Pre-build on everything except help
+    if argument != "help" {
+        PreBuild(wd)
     }
 
-
+    // Perform actions based on the argument
     switch (argument) {
     case "build":
-        PreBuild(wd)
         Build(wd)
 
     case "watch":
-        PreBuild(wd)
         Watch(wd)
 
     case "new":
-        PreBuild(wd)
         NewProject()
 
     case "serve":
-        PreBuild(wd)
         Serve(wd)
+
+    case "new post":
+        NewPost()
 
     case "help":
         Helpers.Print("white", "Arguments:")
-        Helpers.Print("white", "\tbuild - Build your website")
-        Helpers.Print("white", "\tnew   - Create basic folder structure for new projects")
-        Helpers.Print("white", "\twatch - Watch for file changes and build when they are changed")
-        Helpers.Print("white", "\tserve - Host website on local web server, and watch for changes")
+        Helpers.Print("white", "\tbuild     - Build your website")
+        Helpers.Print("white", "\tnew       - Create basic folder structure for new projects")
+        Helpers.Print("white", "\tnew post  - Create a new post")
+        Helpers.Print("white", "\twatch     - Watch for file changes and build when they are changed")
+        Helpers.Print("white", "\tserve     - Host website on local web server, and watch for changes")
         fmt.Println("")
 
     default:
@@ -145,7 +152,6 @@ func Watch(wd string) {
 
 /**
   * Name.........: NewProject
-  * Parameters...: wd (string)
   * Description..: Creates basic file structure
   */
 func NewProject() {
@@ -159,6 +165,31 @@ func NewProject() {
     }
 
     Helpers.Print("Green", "Finished, default files have been created!")
+}
+
+
+/**
+  * Name.........: NewPost
+  * Description..: Creates a new post
+  */
+func NewPost() {
+    reader := bufio.NewReader(os.Stdin)
+
+    fmt.Print("Post Title: ")
+
+    title, _ := reader.ReadString('\n')
+    title = Helpers.Replace(title, "\n", "")
+
+    t := time.Now()
+
+    path := ProgramState.Config["compiler.posts_dir"] + "\\" + t.Format("2006-01-02") + "-" + Helpers.URLSafe(title) + ".html"
+    images := ProgramState.Config["compiler.posts_image_dir"] + "\\" + Helpers.URLSafe(title)
+
+    // Create the post file and the directory
+    FileSystem.WriteFile(path, []string{"---", "title: " + title, "template: post", "---"})
+    FileSystem.CreateDir(images)
+
+
 }
 
 

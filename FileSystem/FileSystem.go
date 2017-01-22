@@ -52,13 +52,30 @@ func ReadFile(path string) ([]string, Errors.Error) {
 
 
 /**
+ * Name.........: CreateDir
+ * Parameters...: path (string) - path of the folder to create
+ * Return.......: error - any errors
+ * Description..: Creates a folder, and any folders that it may be in that don't exist
+ */
+func CreateDir(path string) (Errors.Error) {
+    err1 := os.MkdirAll(path, 0777)
+
+    if err1 != nil {
+        return Errors.NewFatal(err1.Error())
+    }
+
+    return Errors.None()
+}
+
+
+/**
  * Name.........: WriteFile
  * Parameters...: path (string) - path to the file to write to
  *                contents ([]string) - array of lines to write
  * Return.......: error - any errors
  * Description..: Writes to a file
  */
-func WriteFile (path string, contents []string) (Errors.Error) {
+func WriteFile(path string, contents []string) (Errors.Error) {
     var f *os.File
 
     if Helpers.Trim(path) == "" {
@@ -73,13 +90,10 @@ func WriteFile (path string, contents []string) (Errors.Error) {
     // Get the folder name and create the folder
     splitPath := Helpers.Split(path, "\\")
     folder := Helpers.Join(splitPath[:len(splitPath) - 1], "\\")
-    err1 := os.MkdirAll(folder, 0777)
+    err := CreateDir(folder)
+    err.Handle()
 
-    if err1 != nil {
-        return Errors.NewFatal("MEow" + err1.Error())
-    }
-
-    f, err1 = os.Create(path)
+    f, err1 := os.Create(path)
     if err1 != nil {
         return Errors.NewFatal(err1.Error())
     }
@@ -175,7 +189,7 @@ func copyFileContents(src, dst string) (Errors.Error) {
  * Return.......: bool - true if the file exists
  * Description..: Checks if a file exists
  */
-func FileExists (name string) bool {
+func FileExists(name string) bool {
   _, result := os.Stat(name)
 
   if result != nil {
