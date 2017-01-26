@@ -4,6 +4,7 @@
 package Utils
 
 import (
+    "daphne/Constants"
     "strconv"
 )
 
@@ -23,8 +24,8 @@ func ToStr(i int) (string) {
  * Name.........: IsAlphaNum
  * Parameters...: c (int) - ascii number to check
  * Return.......: bool
- * Description..: Returns true if c is the ascii value of a number or a letter 
+ * Description..: Returns true if c is the ascii value of a number or a letter
  */
 func IsAlphaNum(c int) (bool) {
-    return (c <= 122 && c >= 97) || (c <= 57 && c >= 48)
+    return (c <= Constants.ASCII_z && c >= Constants.ASCII_a) || (c <= Constants.ASCII_9 && c >= Constants.ASCII_0)
 }
