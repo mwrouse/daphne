@@ -12,14 +12,14 @@ import (
 
 /**
  * Name.........: Replace
- * Parameters...: orig (string) - the string to replace something in
+ * Parameters...: str (string) - the string to replace something in
  *                toReplace (string) - the string to find and replace
  *                replaceWith (string) - what to replace toReplace with
  * Return.......: string - the string with the replacements
  * Description..: Will replace a substring with another substring in a string
  */
-func Replace(orig string, toReplace string, replaceWith string) (string) {
-    return strings.Replace(line, toReplace, replaceWith, -1)
+func Replace(str string, toReplace string, replaceWith string) (string) {
+    return strings.Replace(str, toReplace, replaceWith, -1)
 }
 
 
@@ -148,7 +148,7 @@ func Remove(arr *[]string, start int, end int) {
     arrStart := Copy(sl[:start])
     arrEnd := Copy(sl[end:])
 
-    sli := append(arrStart, arrEnd...)
+    sl = append(arrStart, arrEnd...)
 
    *arr = sl
 }

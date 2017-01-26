@@ -26,6 +26,6 @@ func ToStr(i int) (string) {
  * Return.......: bool
  * Description..: Returns true if c is the ascii value of a number or a letter
  */
-func IsAlphaNum(c int) (bool) {
+func IsAlphaNum(c rune) (bool) {
     return (c <= Constants.ASCII_z && c >= Constants.ASCII_a) || (c <= Constants.ASCII_9 && c >= Constants.ASCII_0)
 }
