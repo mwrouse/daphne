@@ -24,11 +24,11 @@ var fileWatch = make(map[string]time.Time)
 
 
 /**
-  * Name.........:
-  * Parameters...:
-  * Return.......:
-  * Description..:
-  */
+ * Name.........:
+ * Parameters...:
+ * Return.......:
+ * Description..:
+ */
 func main() {
     wd, err := os.Getwd()
     if err != nil {
@@ -86,10 +86,10 @@ func main() {
 
 
 /**
-  * Name.........: PreBuild
-  * Parameters...: wd (string) - the working directory
-  * Description..: Discovers files and reads the Daphne configuration
-  */
+ * Name.........: PreBuild
+ * Parameters...: wd (string) - the working directory
+ * Description..: Discovers files and reads the Daphne configuration
+ */
 func PreBuild(wd string) {
     Helpers.Print("White", "Pre-Build...")
 
@@ -103,10 +103,10 @@ func PreBuild(wd string) {
 
 
 /**
-  * Name.........: Build
-  * Parameters...: wd (string)
-  * Description..: Builds all of the files (runs after PreBuild)
-  */
+ * Name.........: Build
+ * Parameters...: wd (string)
+ * Description..: Builds all of the files (runs after PreBuild)
+ */
 func Build(wd string) {
     // Preparse all the files so they can reference one another
     Parser.PreparseFiles(ProgramState.Config["compiler.source"], ProgramState)
@@ -132,10 +132,10 @@ func Build(wd string) {
 
 
 /**
-  * Name.........: Watch
-  * Parameters...: wd (string)
-  * Description..: Watches for file changes in an infinite loop
-  */
+ * Name.........: Watch
+ * Parameters...: wd (string)
+ * Description..: Watches for file changes in an infinite loop
+ */
 func Watch(wd string) {
     Build(wd)
     Helpers.Print("White", "Monitoring...")
@@ -151,9 +151,9 @@ func Watch(wd string) {
 
 
 /**
-  * Name.........: NewProject
-  * Description..: Creates basic file structure
-  */
+ * Name.........: NewProject
+ * Description..: Creates basic file structure
+ */
 func NewProject() {
     dirs := []string{"_includes","_templates","_posts"}
     for _, fldr := range dirs {
@@ -169,9 +169,9 @@ func NewProject() {
 
 
 /**
-  * Name.........: NewPost
-  * Description..: Creates a new post
-  */
+ * Name.........: NewPost
+ * Description..: Creates a new post
+ */
 func NewPost() {
     reader := bufio.NewReader(os.Stdin)
 
@@ -194,10 +194,10 @@ func NewPost() {
 
 
 /**
-  * Name.........: Serve
-  * Parameters...: wd (string)
-  * Description..: Builds files and starts a web server
-  */
+ * Name.........: Serve
+ * Parameters...: wd (string)
+ * Description..: Builds files and starts a web server
+ */
 func Serve(wd string) {
     // Modify the URL of the website
     ProgramState.Config["site.url"] = "http://localhost:8081/"
@@ -212,16 +212,16 @@ func Serve(wd string) {
 
 
 /**
-  * Name.........: FileWatch
-  * Parameters...: dir (string)
-  * Return.......: bool - true if a file has changed
-  * Description..: Monitors files for changes
-  */
+ * Name.........: FileWatch
+ * Parameters...: dir (string)
+ * Return.......: bool - true if a file has changed
+ * Description..: Monitors files for changes
+ */
 func FileWatch(dir string) (bool) {
     files := FileSystem.CollapseDirectory(dir, "", true) // Get all the files in the directory
 
     for _, file := range files {
-        if ProgramState.IgnoreDirDuringWatch(file.Directory) {
+        if ProgramState.IgnoreDuringWatch(file.Directory) {
             continue
         }
 

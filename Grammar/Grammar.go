@@ -12,7 +12,6 @@ import (
     "daphne/Grammar/Operators"
     "daphne/Helpers"
     "daphne/DataTypes"
-    "daphne/State"
 )
 
 
@@ -77,7 +76,7 @@ func IsConditional(line string) (bool, string, string, string) {
     operator := ""
     rhs := ""
 
-    waitingFor := DataTypes.StringStack{}
+    waitingFor := make(DataTypes.Stack, 0)
     returnToState := 0
 
     lastLetter := ""
@@ -166,7 +165,7 @@ func IsLogicalCondition(condition string) (bool, string, string, string) {
     operator := ""
     rhs := ""
 
-    waitingFor := DataTypes.StringStack{}
+    waitingFor := make(DataTypes.Stack, 0)
     returnToState := 0
 
     lastLetter := ""
@@ -247,10 +246,10 @@ func IsTernary(line string) (bool, string, string, string) {
 
     returnToState := 0
 
-    sm := State.NewStateMachine(0)
+    sm := DataTypes.NewStateMachine(0)
 
     // State 0 - Reading the condition
-    sm.AddState(0, func (inp string, lastInp string, stack *DataTypes.DataStack) (int) {
+    sm.AddState(0, func (inp string, lastInp string, stack *DataTypes.Stack) (int) {
         state := 0
 
         if (inp == "'" || inp == "\"") && lastInp != "\\" {
@@ -273,7 +272,7 @@ func IsTernary(line string) (bool, string, string, string) {
     })
 
     // State 1 - Waiting for the end of somthing (parenthesis, quotes)
-    sm.AddState(1, func (inp string, lastInp string, stack *DataTypes.DataStack) (int) {
+    sm.AddState(1, func (inp string, lastInp string, stack *DataTypes.Stack) (int) {
         state := 1
 
         if inp == stack.Peek() && lastInp != "\\" {
@@ -300,7 +299,7 @@ func IsTernary(line string) (bool, string, string, string) {
     })
 
     // State 2 - Reading the true part of the ternary
-    sm.AddState(2, func (inp string, lastInp string, stack *DataTypes.DataStack) (int) {
+    sm.AddState(2, func (inp string, lastInp string, stack *DataTypes.Stack) (int) {
         state := 2
         if (inp == "'" || inp == "\"") && lastInp != "\\" {
             state = 1
@@ -325,7 +324,7 @@ func IsTernary(line string) (bool, string, string, string) {
     })
 
     // State 3 - Final State - Reading the false part of the ternary
-    sm.AddFinalState(3, func (inp string, lastInp string, stack *DataTypes.DataStack) (int) {
+    sm.AddFinalState(3, func (inp string, lastInp string, stack *DataTypes.Stack) (int) {
         state := 3
         if (inp == "'" || inp == "\"") && lastInp != "\\" {
             state = 1
@@ -361,10 +360,10 @@ func IsSpecialFunction(line string) (bool, string, string) {
     funcName := ""
     funcParams := ""
 
-    sm := State.NewStateMachine(0)
+    sm := DataTypes.NewStateMachine(0)
 
     // State 0 - looking for opening parens
-    sm.AddState(0, func(inp string, lastInp string, stack *DataTypes.DataStack) (int) {
+    sm.AddState(0, func(inp string, lastInp string, stack *DataTypes.Stack) (int) {
         state := 0
 
         if inp == "(" {
@@ -377,7 +376,7 @@ func IsSpecialFunction(line string) (bool, string, string) {
     })
 
     // State 1 - Looking for closing parenthesis
-    sm.AddState(1, func(inp string, lastInp string, stack *DataTypes.DataStack) (int) {
+    sm.AddState(1, func(inp string, lastInp string, stack *DataTypes.Stack) (int) {
         state := 1
 
         if inp == ")" {
@@ -390,7 +389,7 @@ func IsSpecialFunction(line string) (bool, string, string) {
     })
 
     // State 2 - making sure nothing else happens
-    sm.AddFinalState(2, func(inp string, lastInp string, stack *DataTypes.DataStack) (int) {
+    sm.AddFinalState(2, func(inp string, lastInp string, stack *DataTypes.Stack) (int) {
         if inp != "" {
             return 0
         }

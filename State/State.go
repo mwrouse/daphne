@@ -1,35 +1,35 @@
 package State
-
+/*
 import (
     "daphne/DataTypes"
     "daphne/Helpers"
 )
 
-type SpecialFunction func(DataTypes.Page, *CompilerState)
+type SpecialFunction func(DataTypes.Page, *CompilerState2)
 
 
 /**
  * A struct to represent the current State
- */
-type CompilerState struct {
+ *
+type CompilerState2 struct {
     Config  map[string]string
     Special map[string][]DataTypes.Page
     Ignore []string
 
     CurrentPage DataTypes.Page
-    Meta    DataTypes.MetaStack
+    Meta    DataTypes.Stack
 
     PerformAfterFileWrite []SpecialFunction
 }
 
 /**
  * Compiler State Constructor
- */
-func NewCompilerState() (*CompilerState) {
-    state := new(CompilerState)
+ *
+func NewCompilerState2() (*CompilerState2) {
+    state := new(CompilerState2)
 
     state.Config = make(map[string]string)
-    state.Meta = DataTypes.MetaStack{}
+    state.Meta = make(DataTypes.Stack, 0)
     state.Ignore = []string{}
 
     state.PerformAfterFileWrite = []SpecialFunction{}
@@ -39,16 +39,16 @@ func NewCompilerState() (*CompilerState) {
 
 /**
  * Returns true if a variable exists
- */
-func (self CompilerState) Exists(variable string) (bool) {
+ *
+func (self CompilerState2) Exists(variable string) (bool) {
     return self.Config[variable] != "" || self.CurrentPage.Meta[variable] != "" || (self.Meta.Peek())[variable] != ""
 }
 
 
 /**
  * Retrieves a variable from the compiler state
- */
-func (self CompilerState) Get(variable string) (string) {
+ *
+func (self CompilerState2) Get(variable string) (string) {
     if (self.Meta.Peek())[variable] != "" {
         return (self.Meta.Peek())[variable]
     } else if self.CurrentPage.Meta[variable] != "" {
@@ -63,8 +63,8 @@ func (self CompilerState) Get(variable string) (string) {
 
 /**
  * Sets the value of a variable if possible
- */
-func (self *CompilerState) Set(variable string, value string)  {
+ *
+func (self *CompilerState2) Set(variable string, value string)  {
     if (*self).Config[variable] != "" {
         (*self).Config[variable] = value
 
@@ -79,8 +79,8 @@ func (self *CompilerState) Set(variable string, value string)  {
 
 /**
  * Gets a path in the compiler source
- */
-func (self CompilerState) Path(file string) (string) {
+ *
+func (self CompilerState2) Path(file string) (string) {
     path := self.Config["compiler.source"] + "\\" + file
 
     return Helpers.Replace(Helpers.Replace(path, "\\\\", "\\"), ".\\", "")
@@ -89,32 +89,32 @@ func (self CompilerState) Path(file string) (string) {
 
 /**
  * Gets the file path in the output
- */
-func (self CompilerState) OutputPath(file string) (string) {
+ *
+func (self CompilerState2) OutputPath(file string) (string) {
     return self.Path(self.Config["compiler.output"] + "\\" + file)
 }
 
 
 /**
  * Gets the path to a file in the _includes dir
- */
-func (self CompilerState) Include(file string) (string) {
+ *
+func (self CompilerState2) Include(file string) (string) {
     return self.Path(self.Config["compiler.include_dir"] + "\\" + file)
 }
 
 
 /**
  * Gets the path a file in the templates dir
- */
-func (self CompilerState) Template(file string) (string) {
+ *
+func (self CompilerState2) Template(file string) (string) {
     return self.Path(self.Config["compiler.template_dir"] + "\\" + file)
 }
 
 
 /**
  *
- */
-func (self CompilerState) IgnoreDir(dir string) (bool) {
+ *
+func (self CompilerState2) IgnoreDir(dir string) (bool) {
     if len(dir) < 1 {
         return false
     }
@@ -134,13 +134,13 @@ func (self CompilerState) IgnoreDir(dir string) (bool) {
             if Helpers.HasDir(dir, fldr) {
                 return true;
             }
-        }*/
+        }*
 
     return (dir[:1] == "." && len(dir) > 1)
 }
 
 
-func (self CompilerState) IgnoreDirDuringWatch(dir string) (bool) {
+func (self CompilerState2) IgnoreDirDuringWatch(dir string) (bool) {
     if len(dir) < 1 {
         return false
     }
@@ -157,12 +157,12 @@ func (self CompilerState) IgnoreDirDuringWatch(dir string) (bool) {
 
 
 
-func (self CompilerState) GetSpecial(name string) ([]DataTypes.Page) {
+func (self CompilerState2) GetSpecial(name string) ([]DataTypes.Page) {
     return self.Special[name]
 }
 
 
-func (self CompilerState) GetPageOutpath(page DataTypes.Page) (string) {
+func (self CompilerState2) GetPageOutpath(page DataTypes.Page) (string) {
     filePath := Helpers.Split(page.File, "\\")
 
     if filePath[0] == "." && len(filePath) > 1 {
@@ -188,7 +188,7 @@ func (self CompilerState) GetPageOutpath(page DataTypes.Page) (string) {
 }
 
 
-func (self CompilerState) GetPageURL(page DataTypes.Page) (string) {
+func (self CompilerState2) GetPageURL(page DataTypes.Page) (string) {
     file := page.Meta["page.file"]
     filePath := Helpers.Split(file, "\\")
 
@@ -211,7 +211,7 @@ func (self CompilerState) GetPageURL(page DataTypes.Page) (string) {
     return self.Config["site.url"] + Helpers.Replace(self.Path(url), "\\", "/")
 }
 
-func (self CompilerState) GetPostURL(page DataTypes.Page) (string) {
+func (self CompilerState2) GetPostURL(page DataTypes.Page) (string) {
     permalink := page.GetPermalink(self.Config["blog.permalink"])
 
     if self.Config["blog.foldericize"] != "true" {
@@ -222,3 +222,4 @@ func (self CompilerState) GetPostURL(page DataTypes.Page) (string) {
 
     return self.Config["site.url"] + Helpers.Replace(self.Path(permalink), "\\", "/")
 }
+*/

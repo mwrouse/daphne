@@ -1,7 +1,7 @@
 package DataTypes
 
 import (
-    "daphne/Utils"
+    . "daphne/Utils"
     "daphne/Errors"
 )
 
@@ -101,7 +101,7 @@ func (self *StateMachine) Run(inp string) (bool, Errors.Error) {
             }
 
             // Not in a quick exit state, return an error
-            return false, Errors.NewWarning("Tried to access an invalid state, ", Utils.ToStr(self.State), " Previous state was ", Utils.ToStr(lastState), " Input is: ", inp)
+            return false, Errors.NewWarning("Tried to access an invalid state, ", ToStr(self.State), " Previous state was ", ToStr(lastState), " Input is: ", inp)
         } else {
             // Call the callback for the state
             self.State = self.States[self.State](letter, lastLetter, &self.Stack)

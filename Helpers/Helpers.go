@@ -163,7 +163,7 @@ func Inject(arr1 *[]string, arr2[]string, i int) {
     sl1 = append(arr1Start, arr2...)
     sl1 = append(sl1, arr1End...)
 
-    *arr1 = sl1
+   *arr1 = sl1
 }
 
 
@@ -182,7 +182,7 @@ func Remove(arr *[]string, start int, end int) {
     arrEnd := append([]string{}, sl1[end:]...)
 
     sl1 = append(arrStart, arrEnd...)
-    *arr = sl1
+   *arr = sl1
 }
 
 

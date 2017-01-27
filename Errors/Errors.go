@@ -25,10 +25,10 @@ type Error struct {
 }
 
 /**
-  * Name.........: New
-  * Return.......: Error
-  * Description..: Generates a new blank error message
-  */
+ * Name.........: New
+ * Return.......: Error
+ * Description..: Generates a new blank error message
+ */
 func New() (Error) {
     return *(new(Error))
 }
@@ -39,10 +39,10 @@ func None() (Error) {
 
 
 /**
-  * Name.........: NewFatal
-  * Return.......: Error
-  * Description..: Generates a new error message with level fatal
-  */
+ * Name.........: NewFatal
+ * Return.......: Error
+ * Description..: Generates a new error message with level fatal
+ */
 func NewFatal(params ...string) (Error) {
     err := new(Error)
     err.Level = Fatal
@@ -56,10 +56,10 @@ func NewFatal(params ...string) (Error) {
 
 
 /**
-  * Name.........: NewWarning
-  * Return.......: Error
-  * Description..: Generates a new warning error message
-  */
+ * Name.........: NewWarning
+ * Return.......: Error
+ * Description..: Generates a new warning error message
+ */
 func NewWarning(params ...string) (Error) {
     err := new(Error)
     err.Level = Warning
@@ -72,29 +72,29 @@ func NewWarning(params ...string) (Error) {
 }
 
 /**
-  * Name.........: IsFatal
-  * Return.......: bool
-  * Description..: determines if an error is fatal or not
-  */
+ * Name.........: IsFatal
+ * Return.......: bool
+ * Description..: determines if an error is fatal or not
+ */
 func (err Error) IsFatal() (bool) {
     return err.Level == Fatal
 }
 
 
 /**
-  * Name.........: HasError
-  * Return.......: bool
-  * Description..: determines if an error exists
-  */
+ * Name.........: HasError
+ * Return.......: bool
+ * Description..: determines if an error exists
+ */
 func (err Error) HasError() (bool) {
     return err.Level != NoError
 }
 
 
 /**
-  * Name.........: Handle
-  * Description..: Handles an error
-  */
+ * Name.........: Handle
+ * Description..: Handles an error
+ */
 func (err Error) Handle() {
     if err.HasError() {
         if err.IsFatal() {

@@ -202,10 +202,10 @@ func FileExists(name string) bool {
 
 
 /**
-  * Name.........: EmptyDir
-  * Parameters...: dir (string) - The directory to empty
-  * Description..: Removes all files in a directory
-  */
+ * Name.........: EmptyDir
+ * Parameters...: dir (string) - The directory to empty
+ * Description..: Removes all files in a directory
+ */
 func EmptyDir(dir string) {
     list, err := ioutil.ReadDir(dir)
     if err != nil {
@@ -230,12 +230,12 @@ func EmptyDir(dir string) {
 
 
 /**
-  * Name.........: CollapseDirectory
-  * Parameters...: dir (string) - directory to collapse
-  *                recursive (bool) - if true then it will get files from subfolders
-  * Return.......: []os.FileInfo - all the files found
-  * Description..: Finds files in a directory, and possible subdirectories
-  */
+ * Name.........: CollapseDirectory
+ * Parameters...: dir (string) - directory to collapse
+ *                recursive (bool) - if true then it will get files from subfolders
+ * Return.......: []os.FileInfo - all the files found
+ * Description..: Finds files in a directory, and possible subdirectories
+ */
 func CollapseDirectory(root string, dir string, recursive bool) ([]DataTypes.FileToCompile) {
     files := []DataTypes.FileToCompile{}
 

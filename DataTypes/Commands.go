@@ -29,5 +29,18 @@ type MultilineCommand struct {
     StartLine   int
     EndLine     int
 
-    State       int // What is the state of the command 
+    State       int // What is the state of the command
+}
+
+
+
+func ToCommand(self interface{}) (MultilineCommand) {
+    v, ok := self.(MultilineCommand)
+
+    if !ok {
+        // Could not convert, return an empty map
+        return *(new(MultilineCommand))
+    }
+
+    return v
 }

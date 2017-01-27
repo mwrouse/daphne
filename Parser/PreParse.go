@@ -12,10 +12,10 @@ var validFileExtensions, _ = regexp.Compile("^[^_\\.](.*)?$")
 
 
 /**
-  * Name.........: PreparseFiles
-  * Parameters...: dir (string) - directory to get files in
-  * Description..: Preparses (discovers) files
-  */
+ * Name.........: PreparseFiles
+ * Parameters...: dir (string) - directory to get files in
+ * Description..: Preparses (discovers) files
+ */
 func PreparseFiles(dir string, ProgramState *State.CompilerState) {
     files := FileSystem.CollapseDirectory(dir, "", true) // Get all the files in the directory
 
@@ -41,7 +41,7 @@ func PreparseFiles(dir string, ProgramState *State.CompilerState) {
                     if !err.IsFatal() {
                         ProgramState.Special["site.posts"] = append(ProgramState.Special["site.posts"], page)
                     }
-                    
+
                 // If the directory starts with an underscore count it as a special parameter
                 } else if Helpers.Substring(file.Directory, 0, 0) == "_" {
                     dirPath := Helpers.Split(file.Directory, "\\")

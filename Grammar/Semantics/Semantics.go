@@ -191,11 +191,11 @@ func EvaluateVariable(variable string, ProgramState *State.CompilerState) (strin
 
 
 /**
-  * Name.........:
-  * Parameters...:
-  * Return.......: string - the evaluated print command
-  * Description..: Evaluates a print command
-  */
+ * Name.........:
+ * Parameters...:
+ * Return.......: string - the evaluated print command
+ * Description..: Evaluates a print command
+ */
 func EvaluatePrintCommand(command string, ProgramState *State.CompilerState) (string) {
     result := Helpers.Trim(command[2:len(command) - 2]) // Remove tags
 
@@ -219,12 +219,12 @@ func EvaluatePrintCommand(command string, ProgramState *State.CompilerState) (st
 
 
 /**
-  * Name.........: EvaluateFunction
-  * Parameters...: line (string) - the function to validate
-  *                ProgramState (*State.CompilerState) - The program state
-  * Return.......: string
-  * Description..: Evaluates a function
-  */
+ * Name.........: EvaluateFunction
+ * Parameters...: line (string) - the function to validate
+ *                ProgramState (*State.CompilerState) - The program state
+ * Return.......: string
+ * Description..: Evaluates a function
+ */
 func EvaluateFunction(line string, ProgramState *State.CompilerState) (string) {
     eval := ""
 
@@ -265,11 +265,11 @@ func CopyPostAsset(images []string) (State.SpecialFunction) {
 
 
 /**
-  * Name.........:
-  * Parameters...:
-  * Return.......:
-  * Description..:
-  */
+ * Name.........:
+ * Parameters...:
+ * Return.......:
+ * Description..:
+ */
 func GetCommand(cmd string) (DataTypes.MultilineCommand) {
     cmd = Helpers.Strip(cmd) // Remove everything around the command
 
@@ -291,11 +291,11 @@ func GetCommand(cmd string) (DataTypes.MultilineCommand) {
 
 
 /**
-  * Name.........:
-  * Parameters...:
-  * Return.......:
-  * Description..:
-  */
+ * Name.........:
+ * Parameters...:
+ * Return.......:
+ * Description..:
+ */
  func ParseForEachCondition(condition string) (string, string) {
      operands := Helpers.Split(condition, " as ")
 

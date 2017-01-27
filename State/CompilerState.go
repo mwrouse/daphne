@@ -1,20 +1,25 @@
 package State
 
 import (
-    "daphne/DataTypes"
-    "daphne/Utils"
-    "daphne/Constants"
+    . "daphne/DataTypes"
+    . "daphne/Utils"
+    . "daphne/Constants"
 )
+
+
+type SpecialFunction func(Page, *CompilerState)
 
 
 type CompilerState struct {
     Config      map[string]string
-    Special     map[string]DataTypes.Page
+    Special     map[string][]Page
 
     Ignore      []string // Files/Dirs to ignore
 
-    CurrentPage DataTypes.Page // Current page being parsed
-    MetaStack   DataTypes.Stack // Stack for the page meta (mainly used for for-loops)
+    CurrentPage Page // Current page being parsed
+    Meta        Stack // Stack for the page meta (mainly used for for-loops)
+
+    PerformAfterFileWrite []SpecialFunction
 }
 
 
@@ -28,7 +33,7 @@ func NewCompilerState() (*CompilerState) {
 
     state.Config = make(map[string]string)
     state.Ignore = []string{}
-    state.MetaStack = make(DataTypes.DataStack, 0)
+    state.Meta = make(Stack, 0)
 
     return state
 }
@@ -41,7 +46,7 @@ func NewCompilerState() (*CompilerState) {
  * Description..: Check if a variable exists in conifg or current page meta
  */
 func (self CompilerState) Exists(variable string) (bool) {
-    currPage := self.MetaStack.Peek()
+    currPage := ToMap(self.Meta.Peek())
 
     return self.Config[variable] != "" || currPage[variable] != "" || self.CurrentPage.Meta[variable] != ""
 }
@@ -54,7 +59,7 @@ func (self CompilerState) Exists(variable string) (bool) {
  * Description..: Will get a variable
  */
 func (self CompilerState) Get(variable string) (string) {
-    currPage := self.MetaStack.Peek()
+    currPage := ToMap(self.Meta.Peek())
 
     // Meta stack has highest priority, then the current page, then the configuration of Daphne
     if currPage[variable] != "" {
@@ -70,15 +75,26 @@ func (self CompilerState) Get(variable string) (string) {
 
 
 /**
+ * Name.........: GetSpecial
+ * Parameters...: variable (string) - the special variable to get
+ * Return.......: []Page
+ * Description..: Returns a special variable
+ */
+func (self CompilerState) GetSpecial(variable string) ([]Page) {
+    return self.Special[variable]
+}
+
+
+/**
  * Name.........: Path
  * Parameters...: file (string) - the file to return the path to
  * Return.......: string
  * Description..: Returns a path to a file relative to the compiler source
  */
 func (self CompilerState) Path(file string) (string) {
-    path := self.Config[Constants.SOURCE_DIR] + "\\" + file
-    path = Utils.Replace(path, "\\\\", "\\") // Replace double back slashes with one backslash
-    path = Utils.Replace(path, ".\\", "") // Remove .\ from string
+    path := self.Config[SOURCE_DIR] + "\\" + file
+    path = Replace(path, "\\\\", "\\") // Replace double back slashes with one backslash
+    path = Replace(path, ".\\", "") // Remove .\ from string
 
     return path
 }
@@ -91,7 +107,7 @@ func (self CompilerState) Path(file string) (string) {
  * Description..: Returns the path of a file in relation to the output dir
  */
 func (self CompilerState) OutputPath(file string) (string) {
-    return self.Path(self.Config[Constants.OUTPUT_DIR] + "\\" + file)
+    return self.Path(self.Config[OUTPUT_DIR] + "\\" + file)
 }
 
 
@@ -102,7 +118,7 @@ func (self CompilerState) OutputPath(file string) (string) {
  * Description..: Returns a path to a file in the includes dir
  */
 func (self CompilerState) Include(file string) (string) {
-    return self.Path(self.Config[Constants.INCLUDE_DIR] + "\\" + file)
+    return self.Path(self.Config[INCLUDE_DIR] + "\\" + file)
 }
 
 
@@ -113,7 +129,7 @@ func (self CompilerState) Include(file string) (string) {
  * Description..: Returns a path to a file in the template directory
  */
 func (self CompilerState) Template(file string) (string) {
-    return self.Path(self.Config[Constants.TEMPLATE_DIR] + "\\" + file)
+    return self.Path(self.Config[TEMPLATE_DIR] + "\\" + file)
 }
 
 
@@ -130,7 +146,7 @@ func (self CompilerState) IgnoreDir(dir string) (bool) {
 
     for _, fldr := range self.Ignore {
         // If dir is inside any of the folders that should be ignored, return true
-        if Utils.IsInsideDir(dir, fldr) {
+        if IsInsideDir(dir, fldr) {
             return true
         }
     }
@@ -151,18 +167,18 @@ func (self CompilerState) IgnoreDuringWatch(dir string) (bool) {
     }
 
     // Only ignore stuff in a directory that starts with a period, or is inside the output dir
-    return Utils.IsInsideDir(dir, self.Config[Constants.OUTPUT_DIR]) || (dir[:1] == "." && len(dir) > 1)
+    return IsInsideDir(dir, self.Config[OUTPUT_DIR]) || (dir[:1] == "." && len(dir) > 1)
 }
 
 
 /**
  * Name.........: PageOutput
- * Parameters...: page (DataTypes.Page) - the page to get output path for
+ * Parameters...: page (Page) - the page to get output path for
  * Return.......: string
  * Description..: Gets the output path for a page
  */
-func (self CompilerState) PageOutput(page DataTypes.Page) (string) {
-    path := Utils.Split(page.File, "\\") // Get directory parts
+func (self CompilerState) PageOutput(page Page) (string) {
+    path := Split(page.File, "\\") // Get directory parts
 
     // Remove .\ directory
     if path[0] == "." && len(path) > 1 {
@@ -170,11 +186,11 @@ func (self CompilerState) PageOutput(page DataTypes.Page) (string) {
     }
 
     // Handle posts differently than other pages
-    if path[0] == self.Config[Constants.POSTS_DIR] {
+    if path[0] == self.Config[POSTS_DIR] {
         // Is a blog post
-        permalink := page.GetPermalink(self.Config[Constants.PERMALINK]) // Get the permalink for the page
+        permalink := page.GetPermalink(self.Config[PERMALINK]) // Get the permalink for the page
 
-        if self.Config[Constants.FOLDERICIZE] != "true" {
+        if self.Config[FOLDERICIZE] != "true" {
             // Do not move to own folder
             permalink = permalink + ".html"
         } else {
@@ -182,7 +198,7 @@ func (self CompilerState) PageOutput(page DataTypes.Page) (string) {
             permalink = permalink + "\\index.html"
         }
 
-        return self.OutputPath(Utils.Replace(permalink, "/", "\\")) // Replace forward slashes with back slashes
+        return self.OutputPath(Replace(permalink, "/", "\\")) // Replace forward slashes with back slashes
     }
 
     // Not a blog post
@@ -192,7 +208,7 @@ func (self CompilerState) PageOutput(page DataTypes.Page) (string) {
 
 /**
  * Name.........: PageURL
- * Parameters...: page (DataTypes.Page) - the page to get the URL for
+ * Parameters...: page (Page) - the page to get the URL for
  * Return.......: string
  * Description..: Returns the URL to a page
  *
@@ -200,12 +216,12 @@ func (self CompilerState) PageOutput(page DataTypes.Page) (string) {
  * have the same directory structure as the source dir. If self.OutputPath was used then
  * all URLs would contain the output dir, which would not be good.
  */
-func (self CompilerState) PageURL(page DataTypes.Page) (string) {
+func (self CompilerState) PageURL(page Page) (string) {
     // Handle the URL for blog posts differently
     if page.IsBlogPost {
-        permalink := page.GetPermalink(self.Config[Constants.PERMALINK])
+        permalink := page.GetPermalink(self.Config[PERMALINK])
 
-        if self.Config[Constants.FOLDERICIZE] != "true" {
+        if self.Config[FOLDERICIZE] != "true" {
             // Do not move to own folder
             permalink = permalink + ".html"
         } else {
@@ -213,29 +229,29 @@ func (self CompilerState) PageURL(page DataTypes.Page) (string) {
             permalink = permalink + "\\index.html"
         }
 
-        return self.Config[Constants.SITE_URL] + Utils.Replace(self.Path(permalink), "\\", "/")
+        return self.Config[SITE_URL] + Replace(self.Path(permalink), "\\", "/")
     }
 
     // Not a blog post
     file := page.File
-    filePath := Utils.Split(file, "\\")
+    filePath := Split(file, "\\")
 
     name := filePath[len(filePath) - 1] // Gets the file name
     filePath = filePath[:len(filePath) - 1] // Trim the file name
 
-    extensionParts := Utils.Split(name, ".") // Break apart the file name
+    extensionParts := Split(name, ".") // Break apart the file name
     extension := extensionParts[len(extensionParts) - 1]
-    name = Utils.Join(extensionParts[:len(extensionParts) - 1], ".") // Get the name without the file extension
+    name = Join(extensionParts[:len(extensionParts) - 1], ".") // Get the name without the file extension
 
-    path := utils.Join(filePath, "\\")
+    path := Join(filePath, "\\")
 
     url := ""
 
-    if Utils.ToLower(name) == "index" {
+    if ToLower(name) == "index" {
         url = path + "\\" // Is a folder
     } else {
         url = path + "\\" + name + "." + extension // Is a file
     }
 
-    return self.Config[Constants.SITE_URL] + Utils.Replace(self.Path(url), "\\", "/")
+    return self.Config[SITE_URL] + Replace(self.Path(url), "\\", "/")
 }

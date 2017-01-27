@@ -3,7 +3,7 @@ package Parser
 
 import (
     "daphne/FileSystem"
-    "daphne/DataTypes"
+    . "daphne/DataTypes"
     "daphne/State"
     "daphne/Helpers"
     "daphne/Grammar"
@@ -15,27 +15,27 @@ import (
 
 
 /**
-  * Name.........: ParsePage
-  * Parameters...: file (string) - name of file to parse
-  *                ProgramState (*State.CompilerState) - The State
-  * Return.......: *Page - the parsed page structure
-  *                error - any errors
-  * Description..: Parses a page into the meta section and content section
-  */
-func ParsePage(file string, ProgramState *State.CompilerState) (DataTypes.Page, Errors.Error) {
+ * Name.........: ParsePage
+ * Parameters...: file (string) - name of file to parse
+ *                ProgramState (*State.CompilerState) - The State
+ * Return.......: *Page - the parsed page structure
+ *                error - any errors
+ * Description..: Parses a page into the meta section and content section
+ */
+func ParsePage(file string, ProgramState *State.CompilerState) (Page, Errors.Error) {
     contents, err := FileSystem.ReadFile(file)
     if err.HasError() {
-        return DataTypes.Page{}, err
+        return Page{}, err
     }
 
     // Create struct to hold the page information
-    page := DataTypes.Page{Meta:make(map[string]string), Content:[]string{}, File: file}
+    page := Page{Meta:make(map[string]string), Content:[]string{}, File: file}
 
     state := 0
 
     /**
-     * State machine for splitting the config section and the content section
-     */
+    * State machine for splitting the config section and the content section
+    */
     for i, origLine := range contents {
         line := Helpers.Trim(origLine)
 
@@ -65,7 +65,7 @@ func ParsePage(file string, ProgramState *State.CompilerState) (DataTypes.Page, 
                 }
 
                 page.Meta["page.file"] = file
-                page.Meta["page.url"] = ProgramState.GetPageURL(page)
+                page.Meta["page.url"] = ProgramState.PageURL(page)
 
                 ApplyDefaultMetaConfig(page.Meta, ProgramState)
 
@@ -78,7 +78,7 @@ func ParsePage(file string, ProgramState *State.CompilerState) (DataTypes.Page, 
                 page.Content = Helpers.Copy(contents[i:])
                 page.Meta["content"] = Helpers.Join(page.Content, "\n")
 
-                page.OutFile = ProgramState.GetPageOutpath(page)
+                page.OutFile = ProgramState.PageOutput(page)
 
                 GetExcerpt(&page, ProgramState)
                 return page, Errors.None()
@@ -88,7 +88,7 @@ func ParsePage(file string, ProgramState *State.CompilerState) (DataTypes.Page, 
 
     // If the state is 2, then the file is blank, let this be okay
     if state == 2 {
-        page.OutFile = ProgramState.GetPageOutpath(page)
+        page.OutFile = ProgramState.PageOutput(page)
         return page, Errors.NewWarning(file, " is empty\n")
     }
 
@@ -98,12 +98,12 @@ func ParsePage(file string, ProgramState *State.CompilerState) (DataTypes.Page, 
 
 
 /**
-  * Name.........: ParsePost
-  * Parameters...:
-  * Return.......:
-  * Description..:
-  */
-func ParsePost(file string, ProgramState *State.CompilerState) (DataTypes.Page, Errors.Error) {
+ * Name.........: ParsePost
+ * Parameters...:
+ * Return.......:
+ * Description..:
+ */
+func ParsePost(file string, ProgramState *State.CompilerState) (Page, Errors.Error) {
     page, err := ParsePage(file, ProgramState) // Parse it as a page
     if err.HasError() {
         return page, err
@@ -134,20 +134,20 @@ func ParsePost(file string, ProgramState *State.CompilerState) (DataTypes.Page, 
 
     // Get the post URL Information
     page.Meta["page.slug"] = page.GetSlug()
-    page.Meta["page.url"] = ProgramState.GetPostURL(page)
+    page.Meta["page.url"] = ProgramState.PageURL(page)
 
-    page.OutFile = ProgramState.GetPageOutpath(page)
+    page.OutFile = ProgramState.PageOutput(page)
 
     return page, Errors.None()
 }
 
 
 /**
-  * Name.........: ApplyDefaultMetaConfig
-  * Parameters...: meta (map[string]string) - the config to apply defualts to
-  *                ProgarmState (*State.CompilerState) - Compiler state
-  * Description..: Adds default options to a configuration if they do not exist
-  */
+ * Name.........: ApplyDefaultMetaConfig
+ * Parameters...: meta (map[string]string) - the config to apply defualts to
+ *                ProgarmState (*State.CompilerState) - Compiler state
+ * Description..: Adds default options to a configuration if they do not exist
+ */
 func ApplyDefaultMetaConfig(meta map[string]string, ProgramState *State.CompilerState) {
     defaults := []string{"author", "description", "title", "template"}
 
@@ -160,12 +160,12 @@ func ApplyDefaultMetaConfig(meta map[string]string, ProgramState *State.Compiler
 
 
 /**
-  * Name.........:
-  * Parameters...:
-  * Return.......:
-  * Description..:
-  */
-func GetExcerpt(page *DataTypes.Page, ProgramState *State.CompilerState) {
+ * Name.........:
+ * Parameters...:
+ * Return.......:
+ * Description..:
+ */
+func GetExcerpt(page *Page, ProgramState *State.CompilerState) {
     if page.Meta["page.excerpt"] != "" {
         return
     }
@@ -187,13 +187,13 @@ func GetExcerpt(page *DataTypes.Page, ProgramState *State.CompilerState) {
 
 
 /**
-  * Name.........: ExpandPage
-  * Parameters...: pageInfo (*DataTypes.Page) - the page to expand
-  *                ProgarmState (*State.CompilerState) - Compiler state
-  * Return.......: error - any error that may have occured
-  * Description..: Expands a page into the build directory
-  */
-func ExpandPage(pageInfo *DataTypes.Page, ProgramState *State.CompilerState) (Errors.Error) {
+ * Name.........: ExpandPage
+ * Parameters...: pageInfo (*Page) - the page to expand
+ *                ProgarmState (*State.CompilerState) - Compiler state
+ * Return.......: error - any error that may have occured
+ * Description..: Expands a page into the build directory
+ */
+func ExpandPage(pageInfo *Page, ProgramState *State.CompilerState) (Errors.Error) {
     page := *pageInfo
 
     if page.Meta["page.template"] == "" {
@@ -220,7 +220,7 @@ func ExpandPage(pageInfo *DataTypes.Page, ProgramState *State.CompilerState) (Er
         fn := ProgramState.PerformAfterFileWrite[len(ProgramState.PerformAfterFileWrite) - 1]
 
         fn(page, ProgramState) // Perform the callback
-        
+
         ProgramState.PerformAfterFileWrite = ProgramState.PerformAfterFileWrite[:len(ProgramState.PerformAfterFileWrite) - 1]
     }
 
@@ -230,15 +230,15 @@ func ExpandPage(pageInfo *DataTypes.Page, ProgramState *State.CompilerState) (Er
 
 
 /**
-  * Name.........: ExpandContent
-  * Parameters...: content (*[]string) - the content to expand
-  *                ProgarmState (*State.CompilerState) - Compiler state
-  * Description..: Expands contents for ExpandPage into the build directory
-  */
+ * Name.........: ExpandContent
+ * Parameters...: content (*[]string) - the content to expand
+ *                ProgarmState (*State.CompilerState) - Compiler state
+ * Description..: Expands contents for ExpandPage into the build directory
+ */
 func ExpandContent(content *[]string, ProgramState *State.CompilerState) {
     page := *content
 
-    cmdStack := DataTypes.CommandStack{}
+    cmdStack := Stack{}
 
     partOfCmd := false
 
@@ -272,7 +272,7 @@ func ExpandContent(content *[]string, ProgramState *State.CompilerState) {
 
         inForEachLoop := false
         if cmdStack.Length() > 0 {
-            inForEachLoop = (cmdStack.Peek()).Control == "foreach"
+            inForEachLoop = ToCommand(cmdStack.Peek()).Control == "foreach"
         }
 
 
@@ -304,7 +304,8 @@ func ExpandContent(content *[]string, ProgramState *State.CompilerState) {
                 whatItEnds := Grammar.WhatDoesEndCommandEnd(line) // Find out what it ends
 
                 // Pull command from stack
-                cmd, _ := cmdStack.Pop()
+                cmd1, _ := cmdStack.Pop()
+                cmd := ToCommand(cmd1)
                 cmd.EndLine = i
                 cmd.State = 0
 
@@ -345,7 +346,8 @@ func ExpandContent(content *[]string, ProgramState *State.CompilerState) {
                 whatItEnds := Grammar.WhatDoesEndCommandEnd(line) // Find out what it ends
 
                 // Pull command from stack
-                cmd, _ := cmdStack.Pop()
+                cmd1, _ := cmdStack.Pop()
+                cmd := ToCommand(cmd1)
                 cmd.EndLine = i
                 cmd.State = 0
 
@@ -397,7 +399,8 @@ func ExpandContent(content *[]string, ProgramState *State.CompilerState) {
 
         // Add line to the command at the top of the stack if there is one
         if cmdStack.Length() > 0 && !partOfCmd {
-            cmd, _ := cmdStack.Pop()
+            cmd1, _ := cmdStack.Pop()
+            cmd := ToCommand(cmd1)
 
             if cmd.State == 0 {
                 cmd.IfTrue = append(cmd.IfTrue, origLine)
@@ -541,5 +544,5 @@ func ExpandContent(content *[]string, ProgramState *State.CompilerState) {
         partOfCmd = false
     } // End loop through lines
 
-    *content = page // Give back to caller function
+   *content = page // Give back to caller function
 }

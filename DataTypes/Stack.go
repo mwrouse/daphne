@@ -22,16 +22,16 @@ func (s *Stack) Push(item interface{}) (int) {
  * Return.......: interface{}
  * Description..: Removes the top item from the stack
  */
-func (s *Stack) Pop() (interface{}) {
+func (s *Stack) Pop() (interface{}, int) {
     if len(*s) == 0 {
-        return nil
+        return nil, 0
     }
 
     popped := (*s)[len(*s) - 1]
 
     (*s) = (*s)[:len(*s) - 1]
 
-    return popped
+    return popped, len(*s)
 }
 
 
