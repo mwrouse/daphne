@@ -51,8 +51,9 @@ A website build with Daphne has a very similar folder structure to websites usin
 |   └─ main.js
 └── index.html
 ```
-`_config.daphne` is your configuration file (see next section)
-Any blog posts you right go in `_posts/`.
+`_config.daphne` is your configuration file (see next section).
+
+Any blog posts you write go in `_posts/`.
 
 
 ## Configuration
