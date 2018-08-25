@@ -26,7 +26,7 @@ function _convertFolderStructureToNamespace(root, folderPath) {
  * @param {projectConfig} config project configuration
  */
 function loadData(config) {
-    debug('Loading data');
+    debug('Loading Data');
 
     let root = config.compiler.data_folder_absolute;
     let files = fileUtils.globFiles(root, '**/*.json');
@@ -52,6 +52,93 @@ function loadData(config) {
             console.warn(e);
             namespace[key] = null;
         }
+    }
+}
+
+
+/**
+ * Load the templates available
+ * @param {projectConfig} config project configuration
+ */
+function loadTemplates(config) {
+    debug('Loading Templates');
+
+    let root = config.compiler.templates_folder_absolute;
+
+    let files = fileUtils.globFiles(root, '*.*');
+    if (files.length > 0) {
+        config.site.templates = [];
+        config.__cache.templates = {};
+    }
+
+    for (let i = 0; i < files.length; i++) {
+        let file = files[i];
+        let name = (file.name).replace(path.extname(file.name), '');
+
+        config.site.templates.push(name);
+
+        config.__cache.templates[name] = {
+            info: file,
+            contents: fileUtils.readEntireFileSync(file.absolute)
+        };
+    }
+}
+
+/**
+ * Load files in the includes directory
+ * @param {projectConfig} config project configuration
+ */
+function loadIncludes(config) {
+    debug('Loading Includes');
+
+    let root = config.compiler.includes_folder_absolute;
+
+    let files = fileUtils.globFiles(root, '*.*');
+    if (files.length > 0) {
+        config.site.includes = [];
+        config.__cache.includes = {};
+    }
+
+    for (let i = 0; i < files.length; i++) {
+        let file = files[i];
+        let name = (file.name).replace(path.extname(file.name), '');
+
+        config.site.includes.push(name);
+
+        config.__cache.includes[name] = {
+            info: file,
+            contents: fileUtils.readEntireFileSync(file.absolute)
+        };
+    }
+}
+
+
+/**
+ * Load plugins the project is using
+ * @param {projectConfig} config project configuration
+ */
+function loadPlugins(config) {
+    if (!config.compiler.allow_plugins)
+        return;
+
+    debug('Loading Plugins');
+
+    let root = config.compiler.plugins_folder_absolute;
+    let plugins = fileUtils.globFiles(root, '*/plugin.json');
+    if (plugins.length > 0) {
+        config.site.plugins = [];
+        config.__cache.plugins = {};
+    }
+
+    for (let i = 0; i < plugins.length; i++) {
+        let name = plugins[i].relativeDirname;
+
+        config.site.plugins.push(name);
+
+        config.__cache.plugins[name] = {
+            info: plugins[i],
+            manifest: fileUtils.readEntireFileSync(plugins[i].absolute)
+        };
     }
 }
 
@@ -112,14 +199,13 @@ function discoverFiles(config) {
         let found = fileUtils.globFiles(root, '**/*.*');
         config.compiler.__files = found;
         for (let i = 0; i < found.length; i++) {
-
             debug(`\tFound: ${found[i].relative}`);
         }
     };
 
     //discover(config.site, 'plugins', config.compiler.plugins_folder);
-    discover(config.site, 'templates', config.compiler.templates_folder);
-    discover(config.site, 'includes', config.compiler.includes_folder);
+    //discover(config.site, 'templates', config.compiler.templates_folder);
+    //discover(config.site, 'includes', config.compiler.includes_folder);
 
     for (let i = 0; i < newLocations.length; i++) {
         discover(config.site, newLocations[i].replace('_', ''), newLocations[i]);
@@ -130,5 +216,8 @@ function discoverFiles(config) {
 
 module.exports = {
     loadData,
+    loadTemplates,
+    loadIncludes,
+    loadPlugins,
     discoverFiles
 };

@@ -9,6 +9,7 @@ let defaultConfig = {
         author: "Unkown",
         author_email: "",
         url: "",
+        language: "en",
 
         source: ".",
         output: "_build",
@@ -114,7 +115,8 @@ function applyDefaultConfiguration(config) {
                 applyConfiguration(defaults[key], cfg[key]);
             }
             else {
-                cfg[key] = defaults[key];
+                if (cfg[key] == undefined)
+                    cfg[key] = defaults[key];
             }
 
 
@@ -136,6 +138,7 @@ function applyDefaultConfiguration(config) {
     expandPath(config.compiler, 'data_folder', config.compiler.root);
 
     _expandGlobs(config);
+    config.__cache = {};
 }
 
 

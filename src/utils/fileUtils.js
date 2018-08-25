@@ -10,7 +10,7 @@ let isBinaryFile = require('isbinaryfile');
  */
 function readEntireFileSync(filePath) {
     try {
-        let contents = fs.readFileSync(filePath);
+        let contents = fs.readFileSync(filePath, 'utf-8');
         return contents;
     }
     catch (e) {
