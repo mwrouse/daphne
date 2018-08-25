@@ -21,7 +21,7 @@ let defaultConfig = {
     },
     compiler: {
         plugins_folder: "_plugins",
-        template_folder: "_templates",
+        templates_folder: "_templates",
         includes_folder: "_includes",
         data_folder: "_data",
 
@@ -34,6 +34,7 @@ let defaultConfig = {
         ignore_dot_names: true,
 
         tags: {
+            delimeter: "---",
             opening: "{%",
             closing: "%}",
             print_opening: "{{",
@@ -47,12 +48,14 @@ let defaultConfig = {
  * Expand globs and get files that match
  * @param {projectConfig} config Project configuration
  */
-function expandGlobs(config) {
-    let expandThem = (cfg, key) => {
+function _expandGlobs(config) {
+    let expandThem = (cfg, key, root) => {
         let new_files = [];
+
         for (let i = 0; i < cfg[key].length; i++) {
-            let globPath = path.join(config.root, cfg[key][i]);
+            let globPath = path.join(root, cfg[key][i]);
             globPath = path.normalize(globPath);
+            new_files.push(globPath);
 
             let files = glob.sync(globPath);
             if (files.length > 0)
@@ -60,13 +63,12 @@ function expandGlobs(config) {
         }
 
         // Overwrite key, but keep olld copy
-        cfg[key + '_globs'] = cfg[key].concat([]);
-        cfg[key] = new_files.concat([]);
+        cfg[key + '_absolute'] = new_files.concat([]);
     };
 
-    expandThem(config, 'include');
-    expandThem(config, 'ignore');
-    expandThem(config, 'include_no_compile');
+    expandThem(config.compiler, 'include', config.site.source_absolute);
+    expandThem(config.compiler, 'ignore', config.site.source_absolute);
+    expandThem(config.compiler, 'include_no_compile', config.site.source_absolute);
 }
 
 
@@ -85,9 +87,9 @@ function parseConfigFile(filePath) {
 
 /**
  * Applies default values from defaultConfig to config
- * @param {json} projectConfig Parsed config file object
+ * @param {json} config Parsed config file object
  */
-function applyDefaultConfiguration(projectConfig) {
+function applyDefaultConfiguration(config) {
     let applyArray = (defaults, cfg) => {
         for (let i = 0; i < defaults.length; i++) {
             if (cfg.indexOf(defaults[i]) == -1)
@@ -120,9 +122,20 @@ function applyDefaultConfiguration(projectConfig) {
     };
 
     // Start at root of both
-    applyConfiguration(defaultConfig, projectConfig);
+    applyConfiguration(defaultConfig, config);
 
-    expandGlobs(projectConfig.compiler);
+    // Expand site source and site root
+    let expandPath = (cfg, key, root) => {
+        cfg[key + '_absolute'] = path.join(root, cfg[key]);
+    };
+    expandPath(config.site, 'source', config.compiler.root);
+    expandPath(config.site, 'output', config.compiler.root);
+    expandPath(config.compiler, 'plugins_folder', config.compiler.root);
+    expandPath(config.compiler, 'templates_folder', config.compiler.root);
+    expandPath(config.compiler, 'includes_folder', config.compiler.root);
+    expandPath(config.compiler, 'data_folder', config.compiler.root);
+
+    _expandGlobs(config);
 }
 
 

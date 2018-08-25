@@ -11,6 +11,9 @@ module.exports = (function(exp){
         if (isEnabled)
             debuggers[name].enabled = true;
 
+        debuggers[name].new = (subnamespace) => {
+            return factory(`${name}:${subnamespace}`);
+        };
         return debuggers[name];
     }
 
