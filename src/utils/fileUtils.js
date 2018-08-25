@@ -8,7 +8,7 @@ let fs = require('fs');
  */
 function readEntireFileSync(filePath) {
     try {
-        var contents = fs.readFileSync(filePath);
+        let contents = fs.readFileSync(filePath);
         return contents;
     }
     catch (e) {
