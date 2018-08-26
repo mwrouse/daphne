@@ -3,19 +3,22 @@ let glob = require('glob');
 let path = require('path');
 let isBinaryFile = require('isbinaryfile');
 
+
 /**
  * Reads an entire file
  * @param {string} filePath Path to the file
  * @returns {string} The contents of the file
  */
-function readEntireFileSync(filePath) {
-    try {
-        let contents = fs.readFileSync(filePath, 'utf-8');
-        return contents;
-    }
-    catch (e) {
-        return null;
-    }
+function readEntireFile(filePath) {
+    return new Promise((resolve, reject) => {
+        // Read the contents and resolve the promise
+        fs.readFile(filePath, (err, content) => {
+            if (err != null)
+                reject(err);
+
+            resolve(content);
+        });
+    });
 }
 
 
@@ -26,20 +29,36 @@ function readEntireFileSync(filePath) {
  * @returns things found in the glob
  */
 function globFiles(root, globString) {
-    let globPath = path.join(root, globString);
+    return new Promise((resolve, reject) => {
+        try {
+            let globPath = path.join(root, globString);
 
-    let result = [];
+            // Get all the files
+            glob(globPath, (err, files) => {
+                if (err != null)
+                    reject(err);
 
-    let found = glob.sync(globPath);
-    for (let i = 0; i < found.length; i++) {
-        result.push({
-            absolute: found[i],
-            relative: path.relative(root, found[i]),
-            absoluteDirname: path.dirname(found[i]),
-            relativeDirname: path.dirname(path.relative(root, found[i])),
-            name: path.basename(found[i])
-        });
-    }
+                let result = [];
+                for (let i = 0; i < files.length; i++) {
+                    result.push({
+                        absolute: files[i],
+                        relative: path.relative(root, files[i]),
+                        absoluteDirname: path.dirname(files[i]),
+                        relativeDirname: path.dirname(path.relative(root, files[i])),
+                        name: path.basename(files[i])
+                    });
+                }
+
+                resolve(result);
+            });
+
+        } catch (e) {
+            resolve();
+        }
+    });
+
+
+
 
     return result;
 }
@@ -112,7 +131,7 @@ function copyFile(destination, source) {
 
 
 module.exports = {
-    readEntireFileSync,
+    readEntireFile,
     globFiles,
     canFileBeParsed,
     getMetadataHeader,

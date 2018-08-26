@@ -7,12 +7,36 @@ let preparser = require('./preparser.js');
  * @param {project config} config configuration
  */
 function parse(config) {
-    twoPassParser.firstPass(config);
-    twoPassParser.secondPass(config);
+    return new Promise((resolve, reject) => {
+        //twoPassParser.firstPass(config);
+        //twoPassParser.secondPass(config);
+
+        resolve();
+    });
+}
+
+
+/**
+ * Perfrom the preparse operations
+ * @param {project config} config
+ */
+function preparse(config) {
+    let promises = [
+        preparser.loadData(config),
+        preparser.loadTemplates(config),
+        preparser.loadIncludes(config),
+        preparser.loadPlugins(config),
+        preparser.loadCustomProperties(config),
+        preparser.discoverFiles(config),
+    ];
+
+    return Promise.all(promises).then(() => {
+        console.log('Done!');
+    });
 }
 
 
 module.exports = {
-    preparser,
+    preparse,
     parse
 };

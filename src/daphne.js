@@ -80,12 +80,8 @@ class Daphne {
         utils.config.applyDefaultConfiguration(this._projectConfig);
 
         // Preparse
-        parser.preparser.loadData(this._projectConfig);
-        parser.preparser.loadTemplates(this._projectConfig);
-        parser.preparser.loadIncludes(this._projectConfig);
-        parser.preparser.loadPlugins(this._projectConfig);
-        parser.preparser.loadCustomProperties(this._projectConfig);
-        parser.preparser.discoverFiles(this._projectConfig);
+        parser.preparse(this._projectConfig);
+
 
         // Clean output directory
         utils.directories.removeFolder(this._projectConfig.site.output_absolute);
