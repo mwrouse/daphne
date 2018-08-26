@@ -81,6 +81,7 @@ function loadTemplates(config) {
             info: file,
             contents: fileUtils.readEntireFileSync(file.absolute)
         };
+        debug(`\tFound ${name}`);
     }
 }
 
@@ -109,6 +110,7 @@ function loadIncludes(config) {
             info: file,
             contents: fileUtils.readEntireFileSync(file.absolute)
         };
+        debug(`\tFound ${name}`);
     }
 }
 
@@ -139,19 +141,42 @@ function loadPlugins(config) {
             info: plugins[i],
             manifest: fileUtils.readEntireFileSync(plugins[i].absolute)
         };
+        debug(`\tFound ${name}`);
     }
 }
 
 
+
 /**
- * Finds folders that begin with underscore and adds that to the site properties
- * @param {projectConfig} config project configuration file
- * @returns {string[]} array of new properties
+ * Loads all files in a properties folder
+ * @param {projectConfig} config configuration
+ * @param {fileInfo} prop information about the folder
  */
-function _discoverSiteProperties(config) {
-    debug('Discovering site properties');
-    let root = config.site.source_absolute;
-    let result = [];
+function _readCustomProperties(config, prop) {
+    let key = prop.name.replace('_', '');
+
+    let found = fileUtils.globFiles(prop.absolute, '*.*');
+    if (found.length > 0) {
+        config[key] = [];
+    }
+
+    for (let i = 0; i < found.length; i++) {
+        let file = found[i];
+        let name = (file.name).replace(path.extname(file.name), '');
+
+        config[key].push({
+            info: file,
+            contents: fileUtils.readEntireFileSync(file.absolute)
+        });
+    }
+}
+
+/**
+ * Load custom site properties (folders starting with _)
+ * @param {projectConfig} config configuration
+ */
+function loadCustomProperties(config) {
+    debug('Loading Custom Site Properties');
 
     let ignore = [
         config.compiler.plugins_folder, config.compiler.templates_folder,
@@ -159,25 +184,27 @@ function _discoverSiteProperties(config) {
         config.site.output
     ];
 
-    // Get folders that begin with '_' at the root of the project
-    let found = fileUtils.globFiles(root, '_*/');
-    for (let i = 0; i < found.length; i++) {
-        let folder = found[i];
+    let root = config.site.source_absolute;
+    let properties = fileUtils.globFiles(root, '_*/');
+    if (properties.length > 0) {
+        config.site.__properites = [];
+    }
 
+    for (let i = 0; i < properties.length; i++) {
+        let prop = properties[i];
+        let name = prop.name.replace('_', '');
         // Don't use certain folders
-        if (ignore.indexOf(folder.name) != -1)
+        if (ignore.indexOf(name) != -1)
             continue;
 
         // Don't use ignored folders
-        if (config.compiler.ignore_absolute.indexOf(folder.absolute) != -1)
+        if (config.compiler.ignore_absolute.indexOf(prop.absolute) != -1)
             continue;
 
-        result.push(folder.name);
-        debug(`\tFound property '${folder.name}'`);
-        //config.site[relativeName.replace('_', '')] = []; // It's an array
+        config.site.__properites.push(name);
+        _readCustomProperties(config.__cache.site, prop);
+        debug(`\tFound ${prop}`);
     }
-
-    return result;
 }
 
 
@@ -186,30 +213,35 @@ function _discoverSiteProperties(config) {
  * @param {projectConfig} config project configuration
  */
 function discoverFiles(config) {
-    let newLocations = _discoverSiteProperties(config);
+    debug('Loading other files');
 
-    let discover = (cfg, key, directory) => {
-        debug(`Exploring '${directory}'`);
-
-        if (cfg[key] == undefined || !Array.isArray(cfg[key]))
-            cfg[key] = [];
-
-        let root = path.join(config.site.source, directory);
-
-        let found = fileUtils.globFiles(root, '**/*.*');
-        config.compiler.__files = found;
-        for (let i = 0; i < found.length; i++) {
-            debug(`\tFound: ${found[i].relative}`);
-        }
-    };
-
-    //discover(config.site, 'plugins', config.compiler.plugins_folder);
-    //discover(config.site, 'templates', config.compiler.templates_folder);
-    //discover(config.site, 'includes', config.compiler.includes_folder);
-
-    for (let i = 0; i < newLocations.length; i++) {
-        discover(config.site, newLocations[i].replace('_', ''), newLocations[i]);
+    let root = config.site.source_absolute;
+    let found = fileUtils.globFiles(root, `!(_)*/**/*.*`);
+    let alsoFound = fileUtils.globFiles(root, '*.*');
+    found = found.concat(alsoFound);
+    if (found.length > 0) {
+        config.__cache.files = [];
     }
+
+    for (let i = 0; i < found.length; i++) {
+        if (found[i].name == "config.daphne")
+            continue;
+
+        // Don't use ignored files
+        if (config.compiler.ignore_absolute.indexOf(found[i].absolute) != -1)
+            continue;
+
+        let extenion = path.extname(found[i].name).replace('.', '');
+        let parse = (fileUtils.canFileBeParsed(found[i].absolute) == true && config.compiler.extensions_to_parse.indexOf(extenion) != -1);
+        config.__cache.files.push({
+            info: found[i],
+            shouldParse: parse,
+            content: (parse) ? fileUtils.readEntireFileSync(found[i].absolute) : null
+        });
+        debug(`\tFound ${found[i].relative}`);
+    }
+
+
 }
 
 
@@ -219,5 +251,6 @@ module.exports = {
     loadTemplates,
     loadIncludes,
     loadPlugins,
+    loadCustomProperties,
     discoverFiles
 };

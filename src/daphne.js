@@ -35,7 +35,8 @@ class Daphne {
      */
     buildSite(projectPath) {
         this._preBuild(projectPath);
-
+        //console.log(this._projectConfig.__cache.site);
+        parser.parse(this._projectConfig);
     }
 
 
@@ -83,7 +84,8 @@ class Daphne {
         parser.preparser.loadTemplates(this._projectConfig);
         parser.preparser.loadIncludes(this._projectConfig);
         parser.preparser.loadPlugins(this._projectConfig);
-        //parser.preparser.discoverFiles(this._projectConfig);
+        parser.preparser.loadCustomProperties(this._projectConfig);
+        parser.preparser.discoverFiles(this._projectConfig);
     }
 
 }

@@ -27,12 +27,14 @@ let defaultConfig = {
         data_folder: "_data",
 
         include: [], /* Folders/files to include in compile (globs) */
-        ignore: [],  /* Folders/files to NOT include in compile (globs) */
+        ignore: ['README.md'],  /* Folders/files to NOT include in compile (globs) */
 
         include_no_compile: [], /* Folders/Files to copy to output, but not to compile */
 
         allow_plugins: false,
         ignore_dot_names: true,
+
+        extensions_to_parse: ['html', 'htm', 'txt'],
 
         tags: {
             delimeter: "---",
@@ -139,6 +141,7 @@ function applyDefaultConfiguration(config) {
 
     _expandGlobs(config);
     config.__cache = {};
+    config.__cache['site'] = {};
 }
 
 
