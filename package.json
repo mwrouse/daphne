@@ -31,6 +31,7 @@
   "dependencies": {
     "debug": "^3.1.0",
     "glob": "^7.1.2",
-    "isbinaryfile": "^3.0.3"
+    "isbinaryfile": "^3.0.3",
+    "rimraf": "^2.6.2"
   }
 }

@@ -86,6 +86,9 @@ class Daphne {
         parser.preparser.loadPlugins(this._projectConfig);
         parser.preparser.loadCustomProperties(this._projectConfig);
         parser.preparser.discoverFiles(this._projectConfig);
+
+        // Clean output directory
+        utils.directories.removeFolder(this._projectConfig.site.output_absolute);
     }
 
 }

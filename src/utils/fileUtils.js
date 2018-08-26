@@ -99,11 +99,22 @@ function getMetadataHeader(file, config, debug) {
 }
 
 
+/**
+ * Copies a file to the destination
+ * @param {string} destination Target file
+ * @param {string} source source file
+ */
+function copyFile(destination, source) {
+    fs.copyFileSync(source, destination);
+}
+
+
 
 
 module.exports = {
     readEntireFileSync,
     globFiles,
     canFileBeParsed,
-    getMetadataHeader
+    getMetadataHeader,
+    copyFile
 }

@@ -1,5 +1,8 @@
-let fileUtils = require('../utils/fileUtils.js');
+let fileUtils = require('../utils/fileUtils');
+let directoryUtils = require('../utils/directoryUtils');
 let debugParser = require('../debugger')('parser');
+let fs = require('fs');
+let path = require('path');
 
 
 /**
@@ -17,6 +20,7 @@ function firstPass(config) {
 }
 
 
+
 /**
  * Second pass of the parser
  * Second pass actually expands the body of the file
@@ -27,7 +31,19 @@ function secondPass(config) {
     let debug = debugParser.new('second');
 
     for (let i = 0; i < config.__cache.files.length; i++) {
+        let cache = config.__cache.files[i];
 
+        directoryUtils.createDirectoryStructure(config.site.output_absolute, cache.info.relativeDirname);
+
+        let finalPath = path.join(config.site.output_absolute, cache.info.relative);
+
+        if (!cache.shouldParse) {
+            fileUtils.copyFile(finalPath, cache.info.absolute);
+            continue;
+        }
+
+        // Parse the file and write it
+        fs.writeFileSync(finalPath, cache.content);
     }
 }
 
