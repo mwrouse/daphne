@@ -7,7 +7,7 @@ const argv = process.argv.slice(2);
 const argc = argv.length;
 
 
-let siteGenerator = new Daphne();
+let staticWebsite = new Daphne(directory);
 
 // Enable debugging or not
 switch (argv[argc - 1])
@@ -22,15 +22,15 @@ switch (argv[argc - 1])
 switch (argv[0])
 {
     case "build":
-        siteGenerator.buildSite(directory);
+        staticWebsite.buildSite();
         break;
 
     case "watch":
-        siteGenerator.watchSite(directory);
+        staticWebsite.watchSite();
         break;
 
     case "serve":
-        siteGenerator.serveSite(directory);
+        staticWebsite.serveSite();
         break;
 
 

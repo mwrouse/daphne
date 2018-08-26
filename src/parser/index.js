@@ -21,18 +21,14 @@ function parse(config) {
  * @param {project config} config
  */
 function preparse(config) {
-    let promises = [
+    return Promise.all([
         preparser.loadData(config),
         preparser.loadTemplates(config),
         preparser.loadIncludes(config),
         preparser.loadPlugins(config),
         preparser.loadCustomProperties(config),
         preparser.discoverFiles(config),
-    ];
-
-    return Promise.all(promises).then(() => {
-        console.log('Done!');
-    });
+    ]);
 }
 
 

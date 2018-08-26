@@ -27,7 +27,7 @@ let defaultConfig = {
         data_folder: "_data",
 
         include: [], /* Folders/files to include in compile (globs) */
-        ignore: ['README.md'],  /* Folders/files to NOT include in compile (globs) */
+        ignore: ['*.daphne', 'README.md'],  /* Folders/files to NOT include in compile (globs) */
 
         include_no_compile: [], /* Folders/Files to copy to output, but not to compile */
 
@@ -140,8 +140,9 @@ function applyDefaultConfiguration(config) {
     expandPath(config.compiler, 'data_folder', config.compiler.root);
 
     _expandGlobs(config);
+
+    config.__site = {};
     config.__cache = {};
-    config.__cache['site'] = {};
 }
 
 

@@ -1,7 +1,7 @@
 let utils = require('./utils');
 let parser = require('./parser');
 let path = require('path');
-let debug = require('./debugger')('root');
+let debug = require('./debugger')('\b');
 
 
 /**
@@ -22,8 +22,8 @@ function readAndParseConfigFile(filePath) {
  */
 class Daphne {
 
-    constructor() {
-        this._projectPath = '';
+    constructor(projectPath) {
+        this._projectPath = projectPath;
         this._projectConfig = {};
         this._projectConfigFile = '';
     }
@@ -31,10 +31,9 @@ class Daphne {
 
     /**
      * Begins the entire process of building a static website
-     * @param {string} projectPath Path to project root
      */
-    buildSite(projectPath) {
-        this._preBuild(projectPath);
+    buildSite() {
+        this._preBuild();
         //console.log(this._projectConfig.__cache.site);
         parser.parse(this._projectConfig);
     }
@@ -42,32 +41,27 @@ class Daphne {
 
     /**
      * Watches a project for changes and builds when changes are made
-     * @param {string} projectPath Path to the project root
      */
-    watchSite(projectPath) {
-        this._preBuild(projectPath);
+    watchSite() {
+        this._preBuild();
         console.log("Watching");
     }
 
 
     /**
      * Watches a project for changes while serving a localhost website
-     * @param {string} projectPath Path to project root
      */
-    serveSite(projectPath) {
-        this._preBuild(projectPath);
+    serveSite() {
+        this._preBuild();
         console.log("Serving");
     }
 
 
     /**
      * PreBuild task (setups everything needed)
-     * @param {string} projectPath Path to project root
      */
-    _preBuild(projectPath) {
-        debug(`Build project at ${projectPath}`);
-
-        this._projectPath = projectPath;
+    _preBuild() {
+        debug(`Building project at ${this._projectPath}`);
 
         if (!utils.config.doesProjectHaveConfigFile(this._projectPath))
             throw new Error(`No 'config.daphne' in ${this._projectPath}`);
