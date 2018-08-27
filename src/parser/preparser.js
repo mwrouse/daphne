@@ -168,7 +168,7 @@ function loadIncludes(config) {
 
                 for (let i = 0; i < files.length; i++) {
                     let file = files[i];
-                    let name = (file.name).replace(path.extname(file.name), '');
+                    let name = file.name;
 
                     config.__site.includes.push(name);
                     config.__cache.includes[name] = {

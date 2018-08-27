@@ -11,7 +11,41 @@ let fileUtils = require('../utils/fileUtils');
  * @param {object} file
  */
 function _expandIncludes(config, file) {
-    debug(`Expanding file includes for ${file.info.name}`);
+    debug(`Expanding includes for ${file.info.name}`);
+
+    let cmd = new RegExp(config.compiler.tags.opening + '(?:\\s*)include\\s(.*)?(?:\\s*)' + config.compiler.tags.closing, 'gi');
+    let includes = file.contents.match(cmd);
+
+    let already_included = [];
+
+    for (let i = 0; i < includes.length; i++) {
+        let fileName = includes[i].replace(config.compiler.tags.opening, '')
+                            .replace(config.compiler.tags.closing, '')
+                            .replace('include', '')
+                            .trim();
+
+        if (config.__site.includes.indexOf(fileName) == -1) {
+            debug(`Unkown include of '${fileName}' in ${file.info.relative}`);
+            continue;
+        }
+
+        if (already_included.indexOf(fileName) != -1)
+            continue; // Two of the same include statements in the file
+
+        already_included.push(fileName);
+
+        // Make sure file has valid cache
+        if (config.__cache.includes[fileName] == undefined || config.__cache.includes[fileName].contents == null) {
+            debug(`Error including '${fileName}'`);
+            // TODO: retrieve the file
+            continue;
+        }
+
+        file.contents = file.contents.replace(new RegExp(includes[i], 'gi'), config.__cache.includes[fileName].contents);
+
+        debug(`Including '${fileName}' into ${file.info.relative}`);
+    }
+
 
 
 
@@ -41,8 +75,6 @@ function _expandTemplate(config, file) {
     let newContents = cachedTemplate.contents;
     newContents = newContents.replace(cmd, file.contents);
 
-    if (file.info.name == '404.html')
-        console.log(newContents);
     file.contents = newContents; // Replace the contents of the file
 
     return Promise.resolve(file);

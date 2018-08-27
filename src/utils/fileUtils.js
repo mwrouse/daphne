@@ -4,6 +4,16 @@ let path = require('path');
 let isBinaryFile = require('isbinaryfile');
 
 
+function makeSafeForReplace(content) {
+    content = content.replace(/(?:\r\n|\r)/g, '\n');
+     // Dollar signs are special .replace() parameters
+    // (https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/replace#Specifying_a_string_as_a_parameter#Specifying_a_string_as_a_parameter)
+    // so we need to avoid any mishaps, so we replace every dollar sign with two dollar signs
+    content = content.replace(/\$/g, "$$$");
+
+    return content;
+}
+
 /**
  * Reads an entire file
  * @param {string} filePath Path to the file
@@ -16,15 +26,7 @@ function readEntireFile(filePath) {
             if (err != null)
                 reject(err);
 
-            // Make all newlines just \n
-            content = content.replace(/(?:\r\n|\r)/g, '\n');
-
-            // Dollar signs are special .replace() parameters
-            // (https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/replace#Specifying_a_string_as_a_parameter#Specifying_a_string_as_a_parameter)
-            // so we need to avoid any mishaps, so we replace every dollar sign with two dollar signs
-            content = content.replace(/\$/g, "$$$");
-
-            resolve(content);
+            resolve(makeSafeForReplace(content));
         });
     });
 }
@@ -144,5 +146,6 @@ module.exports = {
     globFiles,
     canFileBeParsed,
     getMetadataHeader,
-    copyFile
+    copyFile,
+    makeSafeForReplace
 }
