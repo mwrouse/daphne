@@ -33,9 +33,15 @@ class Daphne {
      * Begins the entire process of building a static website
      */
     buildSite() {
-        this._preBuild();
+        this._preBuild()
+            .then(() => {
+                return parser.parse(this._projectConfig);
+
+            })
+            .then(() => {
+                console.log('Done!');
+            });
         //console.log(this._projectConfig.__cache.site);
-        parser.parse(this._projectConfig);
     }
 
 
@@ -73,12 +79,11 @@ class Daphne {
         this._projectConfig.compiler.root = this._projectPath;
         utils.config.applyDefaultConfiguration(this._projectConfig);
 
-        // Preparse
-        parser.preparse(this._projectConfig);
-
-
         // Clean output directory
         utils.directories.removeFolder(this._projectConfig.site.output_absolute);
+
+        // Preparse
+        return parser.preparse(this._projectConfig);
     }
 
 }

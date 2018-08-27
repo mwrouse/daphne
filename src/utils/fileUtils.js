@@ -12,9 +12,17 @@ let isBinaryFile = require('isbinaryfile');
 function readEntireFile(filePath) {
     return new Promise((resolve, reject) => {
         // Read the contents and resolve the promise
-        fs.readFile(filePath, (err, content) => {
+        fs.readFile(filePath, { encoding: 'utf-8' }, (err, content) => {
             if (err != null)
                 reject(err);
+
+            // Make all newlines just \n
+            content = content.replace(/(?:\r\n|\r)/g, '\n');
+
+            // Dollar signs are special .replace() parameters
+            // (https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/replace#Specifying_a_string_as_a_parameter#Specifying_a_string_as_a_parameter)
+            // so we need to avoid any mishaps, so we replace every dollar sign with two dollar signs
+            content = content.replace(/\$/g, "$$$");
 
             resolve(content);
         });
@@ -78,18 +86,19 @@ function canFileBeParsed(filePath) {
 }
 
 
+
 /**
  * Returns what is between the delimeters at the top of the file
  * @param {object} file File to get metadata header from
  */
 function getMetadataHeader(file, config, debug) {
     file.metadata = {};
-    if (!file.shouldParse || file.content == null)
+    if (!file.shouldParse || file.contents == null)
         return;
 
     debug(`Reading metadata header for ${file.info.relative}`);
 
-    let lines = file.content.trim().split('\n');
+    let lines = (file.contents).trim().split('\n');
     if (lines[0].trim() != config.compiler.tags.delimeter) {
         console.warn(`File '${file.info.relative}' doesn't begin with a proper metadata header`);
         return;
@@ -113,7 +122,7 @@ function getMetadataHeader(file, config, debug) {
         debug(`\t${key} = ${value}`);
     }
 
-    file.content = lines.join('\n');
+    file.contents = lines.join('\n');
     //console.log(`${file.info.relative}: ${lines.length}`);
 }
 

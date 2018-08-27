@@ -1,18 +1,24 @@
-let twoPassParser = require('./parser.js');
 let preparser = require('./preparser.js');
 
+let firstPass = require('./firstPass');
+let secondPass = require('./secondPass');
 
 /**
  * Performs the two pass parsing
  * @param {project config} config configuration
  */
 function parse(config) {
+    return firstPass(config)
+            .then(() => {
+                secondPass(config);
+            });
+    /*
     return new Promise((resolve, reject) => {
         //twoPassParser.firstPass(config);
         //twoPassParser.secondPass(config);
 
         resolve();
-    });
+    });*/
 }
 
 
