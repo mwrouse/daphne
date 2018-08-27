@@ -36,7 +36,6 @@ class Daphne {
         this._preBuild()
             .then(() => {
                 return parser.parse(this._projectConfig);
-
             })
             .then(() => {
                 console.log('Done!');

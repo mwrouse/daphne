@@ -15,8 +15,10 @@ function _expandIncludes(config, file) {
 
     let cmd = new RegExp(config.compiler.tags.opening + '(?:\\s*)include\\s(.*)?(?:\\s*)' + config.compiler.tags.closing, 'gi');
     let includes = file.contents.match(cmd);
+    if (includes == null || includes == undefined)
+        includes = []; // Don't break things
 
-    let already_included = [];
+    let actually_included = [];
 
     for (let i = 0; i < includes.length; i++) {
         let fileName = includes[i].replace(config.compiler.tags.opening, '')
@@ -29,10 +31,9 @@ function _expandIncludes(config, file) {
             continue;
         }
 
-        if (already_included.indexOf(fileName) != -1)
+        if (actually_included.indexOf(fileName) != -1)
             continue; // Two of the same include statements in the file
 
-        already_included.push(fileName);
 
         // Make sure file has valid cache
         if (config.__cache.includes[fileName] == undefined || config.__cache.includes[fileName].contents == null) {
@@ -41,13 +42,14 @@ function _expandIncludes(config, file) {
             continue;
         }
 
+        actually_included.push(fileName);
         file.contents = file.contents.replace(new RegExp(includes[i], 'gi'), config.__cache.includes[fileName].contents);
 
         debug(`Including '${fileName}' into ${file.info.relative}`);
     }
 
-
-
+    if (actually_included.length > 0)
+        return _expandIncludes(config, file); // Re-run
 
     return Promise.resolve(file);
 }
