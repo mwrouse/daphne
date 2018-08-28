@@ -8,10 +8,10 @@ let secondPass = require('./secondPass');
  * @param {project config} config configuration
  */
 function parse(config) {
-    return firstPass(config)
+    return Promise.resolve();/*firstPass(config)
             .then(() => {
                 secondPass(config);
-            });
+            });*/
     /*
     return new Promise((resolve, reject) => {
         //twoPassParser.firstPass(config);

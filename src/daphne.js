@@ -2,7 +2,9 @@ let utils = require('./utils');
 let parser = require('./parser');
 let path = require('path');
 let debug = require('./debugger')('\b');
-
+let projectConfig = require('./managers/projectConfig');
+let templateManager = require('./managers/templateManager');
+let postManager = require('./managers/postManager');
 
 /**
  * Reads an entire config file and parses it as JSON
@@ -24,8 +26,8 @@ class Daphne {
 
     constructor(projectPath) {
         this._projectPath = projectPath;
-        this._projectConfig = {};
-        this._projectConfigFile = '';
+       // this._projectConfig = {};
+        //this._projectConfigFile = '';
     }
 
 
@@ -35,6 +37,7 @@ class Daphne {
     buildSite() {
         this._preBuild()
             .then(() => {
+                console.log(postManager.posts);
                 return parser.parse(this._projectConfig);
             })
             .then(() => {
@@ -71,8 +74,18 @@ class Daphne {
         if (!utils.config.doesProjectHaveConfigFile(this._projectPath))
             throw new Error(`No 'config.daphne' in ${this._projectPath}`);
 
-        this._projectConfigFile = path.join(this._projectPath, 'config.daphne');
+        //this._projectConfigFile = path.join(this._projectPath, 'config.daphne');
 
+        projectConfig.setProjectRoot(this._projectPath);
+
+        let routine = [
+            templateManager.loadTemplates(),
+            postManager.loadPosts(),
+        ];
+
+        return Promise.all(routine);
+       // return Promise.resolve();
+/*
         // Parse and apply defaults
         this._projectConfig = utils.config.parseConfigFile(this._projectConfigFile);
         this._projectConfig.compiler.root = this._projectPath;
@@ -82,7 +95,7 @@ class Daphne {
         utils.directories.removeFolder(this._projectConfig.site.output_absolute);
 
         // Preparse
-        return parser.preparse(this._projectConfig);
+        return parser.preparse(this._projectConfig);*/
     }
 
 }

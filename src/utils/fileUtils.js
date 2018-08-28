@@ -89,6 +89,8 @@ function canFileBeParsed(filePath) {
 
 
 
+
+
 /**
  * Returns what is between the delimeters at the top of the file
  * @param {object} file File to get metadata header from
