@@ -35,8 +35,6 @@ function _recursiveDelete(root, folder) {
     let fullPath = path.join(root, folder);
     if (!fs.existsSync(fullPath))
         return true;
-    else
-        console.log(`Deleting ${fullPath}`);
 
     if (folder != '.') {
         let nextFolder = path.dirname(folder);

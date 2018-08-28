@@ -60,6 +60,7 @@ function _expandIncludes(config, file) {
  * @param {object} file
  */
 function _expandTemplate(config, file) {
+
     debug(`Expanding file template for ${file.info.name}`);
 
     let template = file.metadata.template;
@@ -90,9 +91,10 @@ function _expandTemplate(config, file) {
  * @param {object} file
  */
 function _discoverFileMetadata(config, file) {
-    debug(`Discoving file metadata for ${file.info.name}`);
+    debug(`Discoving file metadata for ${file.info.relative}`);
     return new Promise((resolve, reject) => {
         fileUtils.getMetadataHeader(file, config, debug);
+
         resolve(file);
     });
 }
@@ -125,6 +127,38 @@ function firstPass(config) {
 
     let awaiting = [];
 
+    // Perform on posts
+    for (let i = 0; i < config.__cache.posts.length; i++) {
+        let post = config.__cache.posts[i];
+
+        awaiting.push(_performFirstPass(config, post.post));
+
+        for (let j = 0; j < post.assets.length; j++) {
+            let asset = post.assets[j];
+            if (!asset.shouldParse) {
+                debug(`Skipping ${asset.info.name}`);
+                continue;
+            }
+
+            awaiting.push(_performFirstPass(config, asset));
+        }
+    }
+
+    // Perform on site properties
+    for (let key in config.__cache.site) {
+        let group = config.__cache.site[key];
+        for (let i = 0; i < group.length; i++) {
+            let file = group[i];
+            if (!file.shouldParse) {
+                debug(`Skipping ${file.info.name}`);
+                continue;
+            }
+            awaiting.push(_performFirstPass(config, file));
+        }
+    }
+
+
+    // Perform on other files
     for (let i = 0; i < config.__cache.files.length; i++) {
         let file = config.__cache.files[i];
         if (!file.shouldParse) {

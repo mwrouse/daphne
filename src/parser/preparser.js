@@ -2,6 +2,7 @@ let glob = require('glob');
 let path = require('path');
 let preparserDebug = require('../debugger')('preparser');
 let fileUtils = require('../utils/fileUtils.js');
+let pluginManager = require('../utils/pluginManager');
 
 
 /**
@@ -138,6 +139,7 @@ function loadTemplates(config) {
                     config.__site.templates.push(name);
                     config.__cache.templates[name] = {
                         info: file,
+                        shouldParse: true,
                         contents: null
                     };
 
@@ -173,6 +175,7 @@ function loadIncludes(config) {
                     config.__site.includes.push(name);
                     config.__cache.includes[name] = {
                         info: file,
+                        shouldParse: true,
                         contents: null
                     };
 
@@ -182,7 +185,6 @@ function loadIncludes(config) {
                 return Promise.all(awaiting);
             });
 }
-
 
 
 /**
@@ -209,16 +211,7 @@ function loadPlugins(config) {
                     let plugin = plugins[i];
                     let name = plugin.relativeDirname;
 
-                    config.__site.plugins.push(name);
-
-                    config.__cache.plugins[name] = {
-                        info: plugin,
-                        manifest: null
-                    };
-
-                    awaiting.push(
-                        _loadFile(config.__cache.plugins, name, plugin.absolute, debug, 'manifest', (c) => JSON.parse(c))
-                    );
+                    awaiting.push(pluginManager.register(name, plugin.absolute));
                 }
 
                 return Promise.all(awaiting);
@@ -253,7 +246,7 @@ function __loadCustomProperty(namespace, key, name, file, debug) {
  * @param {object} namespace configuration
  * @param {string} key
  */
-function _loadCustomProperty(namespace, key, prop, debug) {
+function _loadCustomProperty(namespace, key, prop, debug, config) {
     namespace[key] = [];
 
     return fileUtils.globFiles(prop.absolute, '*.*')
@@ -263,8 +256,16 @@ function _loadCustomProperty(namespace, key, prop, debug) {
                 for (let i = 0; i < files.length; i++) {
                     let file = files[i];
 
+                    // Don't use ignored folders
+                    if (config.compiler.ignore_absolute.indexOf(file.absolute) != -1)
+                        continue;
+
+                    let extension = path.extname(file.name).replace('.', '');
+                    let shouldBeParsed = (fileUtils.canFileBeParsed(file.absolute) && config.compiler.extensions_to_parse.indexOf(extension) != -1);
+
                     namespace[key].push({
                         info: file,
+                        shouldParse: shouldBeParsed,
                         contents: null
                     });
 
@@ -285,13 +286,10 @@ function loadCustomProperties(config) {
     let debug = preparserDebug.new('properties');
     debug('Loading Custom Site Properties');
 
-    config.__site.properites = [];
-    config.__cache.site = {};
-
     let ignore = [
         config.compiler.plugins_folder, config.compiler.templates_folder,
         config.compiler.includes_folder, config.compiler.data_folder,
-        config.site.output
+        config.site.output, config.compiler.posts_folder
     ];
 
     let root = config.site.source_absolute;
@@ -313,9 +311,9 @@ function loadCustomProperties(config) {
                     if (config.compiler.ignore_absolute.indexOf(prop.absolute) != -1)
                         continue;
 
-                    config.__site.properites.push(name);
+                    config.__site.properties.push(name);
 
-                    awaiting.push(_loadCustomProperty(config.__cache.site, name, prop, debug));
+                    awaiting.push(_loadCustomProperty(config.__cache.site, name, prop, debug, config));
                 }
 
                 return Promise.all(awaiting);
@@ -332,8 +330,6 @@ function loadCustomProperties(config) {
 function discoverFiles(config) {
     let debug = preparserDebug.new('files');
     debug('Loading other files');
-
-    config.__cache.files = [];
 
     let root = config.site.source_absolute;
 
@@ -367,6 +363,112 @@ function discoverFiles(config) {
 }
 
 
+/**
+ * Still loads a post
+ */
+function __loadPost(config, key, file, debug) {
+    return fileUtils.readEntireFile(file.absolute)
+        .then((contents) => {
+            let post = config.__cache.posts[key];
+            let postFile = path.join(post.info.absolute, 'index.html');
+
+            file.relative = path.relative(config.compiler.posts_folder_absolute, file.absolute);
+            file.relativeDirname = path.dirname(file.relative);
+
+            if (file.absolute == postFile) {
+                config.__cache.posts[key].post.info = file;
+                config.__cache.posts[key].post.contents = contents;
+                debug(`Found post '${post.slug}'`);
+            }
+            else {
+                config.__cache.posts[key].assets.push({
+                    info: file,
+                    shouldParse: true,
+                    contents: contents
+                });
+            }
+
+        });
+}
+
+/**
+ * Loads a single post, and all of it's files
+ */
+function _loadPost(config, key, debug) {
+    let post = config.__cache.posts[key];
+    let postFile = path.join(post.info.absolute, 'index.html');
+
+    return fileUtils.globFiles(post.info.absolute, '**/*.*')
+            .then((files) => {
+                let awaiting = [];
+
+                for (let i = 0; i < files.length; i++) {
+                    let file = files[i];
+
+                    // Don't take ignored files :)
+                    if (config.compiler.ignore_absolute.indexOf(file.absolute) != -1)
+                        continue;
+
+                    let extension = path.extname(file.name).replace('.', '');
+                    let shouldBeParsed = (fileUtils.canFileBeParsed(file.absolute) && config.compiler.extensions_to_parse.indexOf(extension) != -1);
+
+                    if (!shouldBeParsed) {
+                        config.__cache.posts[key].assets.push({
+                            info: file,
+                            shouldParse: shouldBeParsed,
+                            contents: null
+                        });
+                        continue;
+                    }
+
+                    awaiting.push(__loadPost(config, key, file, debug));
+                }
+
+                return Promise.all(awaiting);
+            });
+}
+
+/**
+ * Find blog posts
+ * @param {projectConfig} config
+ */
+function loadPosts(config) {
+    let debug = preparserDebug.new('posts');
+    debug('Loading Posts');
+
+    let root = config.compiler.posts_folder_absolute;
+
+    return fileUtils.globFiles(root, '*/')
+        .then((posts) => {
+            let awaiting = [];
+            let counter = 0;
+
+            for (let i = 0; i < posts.length; i++) {
+                let post = posts[i];
+
+                // Don't take ignored files
+                if (config.compiler.ignore_absolute.indexOf(post.absolute) != -1)
+                    continue;
+
+                config.__cache.posts.push({
+                    info: post,
+                    slug: post.name,
+                    post: {
+                        info: null,
+                        contents: null,
+                        shouldParse: true
+                    },
+                    assets: [],
+                    contents: null
+                });
+                awaiting.push(_loadPost(config, config.__cache.posts.length - 1, debug));
+            }
+
+            return Promise.all(awaiting);
+        });
+}
+
+
 
 module.exports = {
     loadData,
@@ -374,5 +476,6 @@ module.exports = {
     loadIncludes,
     loadPlugins,
     loadCustomProperties,
-    discoverFiles
+    discoverFiles,
+    loadPosts
 };

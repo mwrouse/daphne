@@ -51,7 +51,7 @@ function globFiles(root, globString) {
                 let result = [];
                 for (let i = 0; i < files.length; i++) {
                     result.push({
-                        absolute: files[i],
+                        absolute: path.normalize(files[i]),
                         relative: path.relative(root, files[i]),
                         absoluteDirname: path.dirname(files[i]),
                         relativeDirname: path.dirname(path.relative(root, files[i])),

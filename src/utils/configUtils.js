@@ -17,7 +17,7 @@ let defaultConfig = {
 
         show_drafts: false, /* If true, then drafts will show up same as finished posts */
 
-        permalink: "/blog/%slug%",
+        post_permalink: "/blog/%slug%", // %category%
         read_more: "<!-- more -->"
     },
     compiler: {
@@ -25,6 +25,7 @@ let defaultConfig = {
         templates_folder: "_templates",
         includes_folder: "_includes",
         data_folder: "_data",
+        posts_folder: "_posts",
 
         include: [], /* Folders/files to include in compile (globs) */
         ignore: ['*.daphne', 'README.md'],  /* Folders/files to NOT include in compile (globs) */
@@ -66,6 +67,9 @@ function _expandGlobs(config) {
         }
 
         // Overwrite key, but keep olld copy
+        for (let i = 0; i < new_files.length; i++)
+            new_files[i] = path.normalize(new_files[i]);
+
         cfg[key + '_absolute'] = new_files.concat([]);
     };
 
@@ -132,17 +136,30 @@ function applyDefaultConfiguration(config) {
     let expandPath = (cfg, key, root) => {
         cfg[key + '_absolute'] = path.join(root, cfg[key]);
     };
+
     expandPath(config.site, 'source', config.compiler.root);
     expandPath(config.site, 'output', config.compiler.root);
     expandPath(config.compiler, 'plugins_folder', config.compiler.root);
     expandPath(config.compiler, 'templates_folder', config.compiler.root);
     expandPath(config.compiler, 'includes_folder', config.compiler.root);
     expandPath(config.compiler, 'data_folder', config.compiler.root);
+    expandPath(config.compiler, 'posts_folder', config.compiler.root);
 
     _expandGlobs(config);
 
-    config.__site = {};
-    config.__cache = {};
+    config.__site = {
+        properties: [],
+        includes: [],
+        templates: [],
+        posts: []
+    };
+    config.__cache = {
+        files: [],
+        posts: [],
+        site: {},
+        includes: {},
+        templates: {},
+    };
 }
 
 

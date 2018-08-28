@@ -33,6 +33,7 @@ function preparse(config) {
         preparser.loadIncludes(config),
         preparser.loadPlugins(config),
         preparser.loadCustomProperties(config),
+        preparser.loadPosts(config),
         preparser.discoverFiles(config),
     ]);
 }
