@@ -29,7 +29,7 @@ class TemplateManager {
                     let template = templates[i];
                     let name = (template.name).replace(path.extname(template.name), '');
 
-                    if (config.compiler.ignore_absolute.indexOf(template.absolute) != -1)
+                    if (config.isFileIgnored(template.absolute))
                         continue; // Ignore the file
 
                     waiting.push(
@@ -41,7 +41,13 @@ class TemplateManager {
                     );
                 }
 
-                return Promise.all(waiting);
+                return Promise.all(waiting)
+                    .then((templates) => {
+                        for (let i = 0; i < templates.length; i++) {
+                            let name = (templates[i].name).replace(path.extname(templates[i].name), '');
+                            this.addTemplate(name, templates[i]);
+                        }
+                    });
             });
     }
 

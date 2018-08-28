@@ -66,7 +66,7 @@ class DataManager {
                 for (let i = 0; i < data_files.length; i++) {
                     let file = data_files[i];
 
-                    if (config.compiler.ignore_absolute.indexOf(file.absolute) != -1)
+                    if (config.isFileIgnored(file.absolute))
                         continue; // File is ignored
 
                     waiting.push(

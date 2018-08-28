@@ -6,6 +6,7 @@ let isBinaryFile = require('isbinaryfile');
 
 function makeSafeForReplace(content) {
     content = content.replace(/(?:\r\n|\r)/g, '\n');
+
      // Dollar signs are special .replace() parameters
     // (https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/replace#Specifying_a_string_as_a_parameter#Specifying_a_string_as_a_parameter)
     // so we need to avoid any mishaps, so we replace every dollar sign with two dollar signs
@@ -92,46 +93,6 @@ function canFileBeParsed(filePath) {
 
 
 /**
- * Returns what is between the delimeters at the top of the file
- * @param {object} file File to get metadata header from
- */
-function getMetadataHeader(file, config, debug) {
-    file.metadata = {};
-    if (!file.shouldParse || file.contents == null)
-        return;
-
-    debug(`Reading metadata header for ${file.info.relative}`);
-
-    let lines = (file.contents).trim().split('\n');
-    if (lines[0].trim() != config.compiler.tags.delimeter) {
-        console.warn(`File '${file.info.relative}' doesn't begin with a proper metadata header`);
-        return;
-    }
-
-    lines.shift(); // Remove first line (that was already read)
-
-    while (lines.length > 0) {
-        let line = lines.shift().trim();
-        if (line == config.compiler.tags.delimeter)
-            break; // Done reading metadata
-
-        let parts = line.split(':');
-        if (parts.length < 2)
-            throw new Error(`Unable to parse metadata from file '${file.info.relative}', invalid line in header: ${line}`);
-
-        let key = parts.shift().trim();
-        let value = parts.join(':').trim();
-
-        file.metadata[key] = value;
-        debug(`\t${key} = ${value}`);
-    }
-
-    file.contents = lines.join('\n');
-    //console.log(`${file.info.relative}: ${lines.length}`);
-}
-
-
-/**
  * Copies a file to the destination
  * @param {string} destination Target file
  * @param {string} source source file
@@ -147,7 +108,6 @@ module.exports = {
     readEntireFile,
     globFiles,
     canFileBeParsed,
-    getMetadataHeader,
     copyFile,
     makeSafeForReplace
 }

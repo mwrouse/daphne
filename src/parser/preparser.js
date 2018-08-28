@@ -22,7 +22,7 @@ function _convertFolderStructureToNamespace(root, folderPath) {
     return _convertFolderStructureToNamespace(root[next_namespace], paths.join(path.sep));
 }
 
-
+//
 /**
  * Generic file loader
  * @param {object} namespace

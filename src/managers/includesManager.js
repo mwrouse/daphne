@@ -39,7 +39,7 @@ class IncludesManager {
                 for (let i = 0; i < files.length; i++) {
                     let file = files[i];
 
-                    if (config.compiler.ignore_absolute.indexOf(file.absolute) != -1)
+                    if (config.isFileIgnored(file.absolute))
                         continue; // Ignored
 
                     waiting.push(

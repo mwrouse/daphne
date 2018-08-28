@@ -39,7 +39,7 @@ class Daphne {
     buildSite() {
         this._preBuild()
             .then(() => {
-                console.log(dataManager.data);
+                console.log(JSON.stringify(postManager.posts));
                 return parser.parse(this._projectConfig);
             })
             .then(() => {

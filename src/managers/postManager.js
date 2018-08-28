@@ -12,10 +12,16 @@ var __postCache = [];
  * @param {string} file
  */
 function __loadAsset(file) {
-    return fileUtils.readEntireFile(file)
-        .then((content) => {
-            return new FileToCompile(file, content);
-        });
+    if (fileUtils.canFileBeParsed(file)) {
+        return fileUtils.readEntireFile(file)
+            .then((content) => {
+                return new FileToCompile(file, content);
+            });
+    }
+    else {
+        console.log(file);
+        return Promise.resolve(new FileToCompile(file, null));
+    }
 }
 
 /**
@@ -31,23 +37,23 @@ function __loadPostAndAssets(folder) {
             for (let i = 0; i < files_found.length; i++) {
                 let file = files_found[i];
 
-                if (config.compiler.ignore_absolute.indexOf(file.absolute) != -1)
+                if (config.isFileIgnored(file.absolute))
                     continue; // Ignore the file
 
                 let extension = path.extname(file.absolute);
                 let nameNoExtension = path.basename(file.absolute).replace(extension, '');
-                if (nameNoExtension == 'index') {
+                if (nameNoExtension == 'post-index') {
                     post_file_load = __loadAsset(file.absolute, debug);
                 }
                 else {
                     assets_loading.push(
-                        __loadAsset(file.absolute, debug)
+                        __loadAsset(file.absolute)
                     );
                 }
             }
 
             if (post_file_load == null)
-                throw new Error(`Post does not contain an index.html file`);
+                throw new Error(`Post does not contain an 'post-index.*' file`);
 
             return post_file_load.then((post_file) => {
                 // Wait until all assets are done loading
@@ -61,6 +67,7 @@ function __loadPostAndAssets(folder) {
 
         });
 }
+
 
 
 class PostManager {

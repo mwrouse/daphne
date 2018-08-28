@@ -202,33 +202,35 @@ class ProjectConfig {
         this.compiler.root = __projectRoot;
     }
 
+
     /**
-     * Returns the project root
+     * Returns true if absolute path of file is ignored
+     * @param {string} filePath
+     */
+    isFileIgnored(filePath) {
+        return (this.compiler.ignore_absolute.indexOf(filePath) != -1);
+    }
+
+    /**
+     * Returns the project folder
      */
     get projectRoot() {
         return __projectRoot;
     }
 
     /**
-     * Returns the website root
+     * Returns the website folder
      */
     get websiteRoot() {
         return this.site.source_absolute;
     }
 
-
     /**
-     * Returns the context for the project (for page rendering)
+     * Output folder
      */
-    getProjectContext() {
-        let data = {
-
-        };
-
-        return data;
+    get outputRoot() {
+        return this.site.output_absulte;
     }
-
-
 }
 
 // Export as a singleton

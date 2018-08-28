@@ -53,7 +53,10 @@ class FileToCompile {
 
     constructor(filePath, content) {
         filePath = path.normalize(filePath);
+        content = (content == undefined || content == null) ? '' : content;
+
         let root = path.normalize(projectConfig.site.source_absolute);
+
 
         // Information about the file and raw content
         this.__file = {
@@ -69,13 +72,14 @@ class FileToCompile {
         this.__header = ''; // File header
         this.__metadata = {}; // Parsed file header
 
-        this.__content = ''; // Content with header removed
-        this.__fullPage = ''; // Content after template and all that stuff
+        this.__content = this.__file.content; // Content with header removed
+        this.__fullPage = this.__file.content; // Content after template and all that stuff
         this.__assets = []; // For posts
         this.__preview = '';
 
         this.__debug = debugFactory('file:' + this.__file.name);
 
+        // Read header and get preview if possible
         if (this.shouldBeParsed) {
             __getPageInformation.call(this);
 
@@ -100,8 +104,21 @@ class FileToCompile {
         }
 
         // TODO: Add url and stuff
-        data.content = this.content;
-        data.preview = this.preview;
+        data.file_name = this.__file.name;
+        data.content = null;
+        data.preview = null;
+
+        if (this.shouldBeParsed) {
+            data.content = this.content;
+            data.preview = this.preview;
+        }
+        data.isBinary = !this.shouldBeParsed;
+
+        data.assets = [];
+
+        for (let i = 0; i < this.__assets.length; i++) {
+            data.assets.push(this.__assets[i].context);
+        }
 
         return data;
     }
