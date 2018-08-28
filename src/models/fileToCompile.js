@@ -86,14 +86,6 @@ class FileToCompile {
         }
     }
 
-
-    /**
-     * If the file should be parsed
-     */
-    get shouldBeParsed() {
-        return fileUtils.canFileBeParsed(this.__file.absolute);
-    }
-
     /**
      * Gets object for use when rendering the file
      */
@@ -102,11 +94,12 @@ class FileToCompile {
 
         for (let key in this.__metadata) {
             if (!this.__metadata.hasOwnProperty(key))
-            continue;
+                continue;
 
             data[key] = this.__metadata[key];
         }
 
+        // TODO: Add url and stuff
         data.content = this.content;
         data.preview = this.preview;
 
@@ -132,6 +125,24 @@ class FileToCompile {
      */
     get preview() {
         return this.__preview;
+    }
+
+    // File name
+    get name() {
+        return this.__file.name;
+    }
+
+    // Absolute path
+    get path() {
+        return this.__file.absolute;
+    }
+
+
+    /**
+     * If the file should be parsed
+     */
+    get shouldBeParsed() {
+        return fileUtils.canFileBeParsed(this.__file.absolute);
     }
 }
 

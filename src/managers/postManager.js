@@ -71,6 +71,7 @@ class PostManager {
      * Load all the posts
      */
     loadPosts() {
+        debug('Loading Posts');
         let root = config.compiler.posts_folder_absolute;
 
         return fileUtils.globFiles(root, '*/')
@@ -82,7 +83,7 @@ class PostManager {
                     if (config.compiler.ignore_absolute.indexOf(post.absolute) != -1)
                         continue; // Ignore folder
 
-                    debug(`Loading post in folder '${post.relative}'`);
+                    debug(`Loading post from '${post.relative}'`);
                     waiting.push(
                         __loadPostAndAssets(post.absolute)
                     );

@@ -18,6 +18,7 @@ class TemplateManager {
      * Loads all templates in a project
      */
     loadTemplates() {
+        debug('Loading Templates');
         let root = config.compiler.templates_folder_absolute;
 
         return fileUtils.globFiles(root, '*.*')

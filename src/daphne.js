@@ -5,6 +5,8 @@ let debug = require('./debugger')('\b');
 let projectConfig = require('./managers/projectConfig');
 let templateManager = require('./managers/templateManager');
 let postManager = require('./managers/postManager');
+let dataManager = require('./managers/dataManager');
+let includesManager = require('./managers/includesManager');
 
 /**
  * Reads an entire config file and parses it as JSON
@@ -37,7 +39,7 @@ class Daphne {
     buildSite() {
         this._preBuild()
             .then(() => {
-                console.log(postManager.posts);
+                console.log(dataManager.data);
                 return parser.parse(this._projectConfig);
             })
             .then(() => {
@@ -81,6 +83,8 @@ class Daphne {
         let routine = [
             templateManager.loadTemplates(),
             postManager.loadPosts(),
+            dataManager.loadData(),
+            includesManager.loadIncludes(),
         ];
 
         return Promise.all(routine);
