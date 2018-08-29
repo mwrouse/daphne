@@ -17,7 +17,7 @@ class TemplateManager {
     /**
      * Loads all templates in a project
      */
-    loadTemplates() {
+    load() {
         debug('Loading Templates');
         let root = config.compiler.templates_folder_absolute;
 

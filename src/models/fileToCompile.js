@@ -103,7 +103,7 @@ class FileToCompile {
             data[key] = this.__metadata[key];
         }
 
-        // TODO: Add url and stuff
+        data.url = null;
         data.file_name = this.__file.name;
         data.content = null;
         data.preview = null;

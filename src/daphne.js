@@ -7,6 +7,7 @@ let templateManager = require('./managers/templateManager');
 let postManager = require('./managers/postManager');
 let dataManager = require('./managers/dataManager');
 let includesManager = require('./managers/includesManager');
+let fileManager = require('./managers/otherFileManager');
 
 /**
  * Reads an entire config file and parses it as JSON
@@ -19,6 +20,13 @@ function readAndParseConfigFile(filePath) {
     return JSON.parse(fileContents);
 }
 
+// Fatal error
+function fatal(e) {
+    console.log('\n');
+    console.error(e);
+    console.log('\n');
+    process.exit();
+}
 
 
 /**
@@ -28,8 +36,7 @@ class Daphne {
 
     constructor(projectPath) {
         this._projectPath = projectPath;
-       // this._projectConfig = {};
-        //this._projectConfigFile = '';
+
     }
 
 
@@ -39,11 +46,8 @@ class Daphne {
     buildSite() {
         this._preBuild()
             .then(() => {
-                console.log(JSON.stringify(postManager.posts));
+                //console.log(JSON.stringify(postManager.posts));
                 return parser.parse(this._projectConfig);
-            })
-            .then(() => {
-                console.log('Done!');
             });
         //console.log(this._projectConfig.__cache.site);
     }
@@ -73,21 +77,26 @@ class Daphne {
     _preBuild() {
         debug(`Building project at ${this._projectPath}`);
 
-        if (!utils.config.doesProjectHaveConfigFile(this._projectPath))
-            throw new Error(`No 'config.daphne' in ${this._projectPath}`);
+        try {
+            projectConfig.setProjectRoot(this._projectPath);
+        } catch (e) {
+            fatal(e);
+        }
 
-        //this._projectConfigFile = path.join(this._projectPath, 'config.daphne');
 
-        projectConfig.setProjectRoot(this._projectPath);
-
-        let routine = [
-            templateManager.loadTemplates(),
-            postManager.loadPosts(),
-            dataManager.loadData(),
-            includesManager.loadIncludes(),
+        let preBuildRoutine = [
+            templateManager.load(),
+            postManager.load(),
+            dataManager.load(),
+            includesManager.load(),
+            fileManager.load(),
         ];
 
-        return Promise.all(routine);
+        return Promise.all(preBuildRoutine)
+            .catch((error) => {
+                fatal(error);
+            });
+
        // return Promise.resolve();
 /*
         // Parse and apply defaults

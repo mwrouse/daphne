@@ -41,8 +41,9 @@ function __loadPostAndAssets(folder) {
                     continue; // Ignore the file
 
                 let extension = path.extname(file.absolute);
-                let nameNoExtension = path.basename(file.absolute).replace(extension, '');
-                if (nameNoExtension == 'post-index') {
+                let name = path.basename(file.absolute).replace(extension, '');
+
+                if (name == 'post-index' && post_file_load == null) {
                     post_file_load = __loadAsset(file.absolute, debug);
                 }
                 else {
@@ -77,7 +78,7 @@ class PostManager {
     /**
      * Load all the posts
      */
-    loadPosts() {
+    load() {
         debug('Loading Posts');
         let root = config.compiler.posts_folder_absolute;
 

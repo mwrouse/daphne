@@ -28,7 +28,7 @@ class IncludesManager {
     /**
      * Load all files that could be included in others
      */
-    loadIncludes() {
+    load() {
         debug('Loading Includes');
         let root = config.compiler.includes_folder_absolute;
 

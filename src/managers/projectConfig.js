@@ -61,21 +61,25 @@ var __default_compiler = {
  * @param {string} root Project root
  */
 function __loadConfigFile(root) {
-    __configFilePath = path.join(root, 'config.daphne');
-    let contents = fs.readFileSync(__configFilePath);
-    __parsed_config = JSON.parse(contents);
+    try {
+        __configFilePath = path.join(root, 'config.daphne');
+        let contents = fs.readFileSync(__configFilePath);
+        __parsed_config = JSON.parse(contents);
 
-    debug(`Read project config from '${__configFilePath}'`);
+        debug(`Read project config from '${__configFilePath}'`);
 
-    if (__parsed_config.site == undefined || __parsed_config.site == null)
-        __parsed_config.site = {};
+        if (__parsed_config.site == undefined || __parsed_config.site == null)
+            __parsed_config.site = {};
 
-    if (__parsed_config.compiler == undefined || __parsed_config.compiler == null)
-        __parsed_config.compiler = {};
+        if (__parsed_config.compiler == undefined || __parsed_config.compiler == null)
+            __parsed_config.compiler = {};
 
-    // Deep copy two parts of the config
-    this.site = JSON.parse(JSON.stringify(__parsed_config.site));
-    this.compiler = JSON.parse(JSON.stringify(__parsed_config.compiler));
+        // Deep copy two parts of the config
+        this.site = JSON.parse(JSON.stringify(__parsed_config.site));
+        this.compiler = JSON.parse(JSON.stringify(__parsed_config.compiler));
+    } catch (e) {
+        throw new Error(`Unable to find or read 'config.daphne' file in '${root}'`);
+    }
 }
 
 /**

@@ -55,7 +55,7 @@ class DataManager {
     /**
      * Load all of the site data
      */
-    loadData() {
+    load() {
         debug('Loading Data');
         let root = config.compiler.data_folder_absolute;
 
