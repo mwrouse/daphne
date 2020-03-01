@@ -100,11 +100,13 @@ func EvaluateConditional(condition string, ProgramState *State.CompilerState) bo
 		return false
 	}
 
+	//Helpers.Print("magenta", lhs, operator, rhs)
 	lhs = Helpers.ToLower(EvaluateVariable(lhs, ProgramState))
 	rhs = Helpers.ToLower(EvaluateVariable(rhs, ProgramState))
 
 	switch operator {
 	case Operators.Comparison.Equal:
+		//Helpers.Print("green", lhs, " == ", rhs)
 		return lhs == rhs
 
 	case Operators.Comparison.NotEqual:
@@ -152,6 +154,19 @@ func EvaluateLogicalCondition(condition string, ProgramState *State.CompilerStat
 /**
  * Evaluates a Variable
  */
+func EvaluateSetCommand(variable string, value string, ProgramState *State.CompilerState) {
+	variable = Helpers.Trim(variable)
+
+	value = EvaluateVariable(value, ProgramState)
+
+	// Set the variable
+	ProgramState.Set(variable, value)
+	return
+}
+
+/**
+ * Evaluates a Variable
+ */
 func EvaluateVariable(variable string, ProgramState *State.CompilerState) string {
 	variable = Helpers.Trim(variable)
 
@@ -174,6 +189,7 @@ func EvaluateVariable(variable string, ProgramState *State.CompilerState) string
 		variable = Helpers.StripQuotes(variable)
 	} else {
 		if variableRegex.MatchString(Helpers.Trim(Helpers.ToLower(variable))) {
+			//Helpers.Print("red", "Not Found: ", variable)
 			return ""
 		}
 	}

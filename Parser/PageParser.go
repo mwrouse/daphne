@@ -61,7 +61,9 @@ func ParsePage(file string, ProgramState *State.CompilerState) (DataTypes.Page, 
 					return page, err
 				}
 
-				page.Meta["page.slug"] = page.GetSlug()
+				if page.Meta["page.slug"] == "" {
+					page.Meta["page.slug"] = page.GetSlug()
+				}
 				page.Meta["page.file"] = file
 				page.Meta["page.url"] = ProgramState.GetPageURL(page)
 
@@ -232,13 +234,15 @@ func ExpandContent(content *[]string, ProgramState *State.CompilerState) {
 	page := *content
 
 	cmdStack := DataTypes.CommandStack{}
+	ProgramState.CurrentPage.Meta["page.x"] = "66"
 
 	partOfCmd := false
 
+	//Helpers.Print("yellow", "Page: ", Helpers.Join(page, "\n"))
 	// Loop through lines
 	for i, origLine := range page {
 		line := Helpers.Trim(origLine)
-
+		//Helpers.Print("green", "Line: ", line)
 		// Break up new lines
 		lineBreaks := Helpers.Split(line, "\n")
 		if len(lineBreaks) > 1 {
@@ -261,6 +265,22 @@ func ExpandContent(content *[]string, ProgramState *State.CompilerState) {
 				ExpandContent(&page, ProgramState)
 				break
 			}
+		}
+
+		// Check if it is a set command
+		isSet, setVar, setVal := Grammar.IsSetCommand(line)
+		if isSet {
+			if cmdStack.Length() == 0 {
+				//Helpers.Print("Cyan", setVar, " = ", setVal)
+				Semantics.EvaluateSetCommand(setVar, setVal, ProgramState)
+				page[i] = ""
+				//Helpers.Remove(&page, i, i)
+				continue
+				//ExpandContent(&page, ProgramState)
+				//break
+			} //else {
+			//Helpers.Print("cyan", "set in a command", cmdStack.Peek().Control)
+			//}
 		}
 
 		inForEachLoop := false
@@ -294,11 +314,11 @@ func ExpandContent(content *[]string, ProgramState *State.CompilerState) {
 				// Look for command that ends something
 			} else if Grammar.EndsMultilineCommand(line) {
 				whatItEnds := Grammar.WhatDoesEndCommandEnd(line) // Find out what it ends
-
 				// Pull command from stack
 				cmd, _ := cmdStack.Pop()
 				cmd.EndLine = i
 				cmd.State = 0
+				//Helpers.Print("magenta", "End of multiline: ", line, " => ", whatItEnds, " => ", cmd.Control)
 
 				// Only process if it ends the command on top of the stack
 				if whatItEnds == cmd.Control {
@@ -317,10 +337,13 @@ func ExpandContent(content *[]string, ProgramState *State.CompilerState) {
 						Helpers.Remove(&page, cmd.StartLine, cmd.EndLine)
 						Helpers.Inject(&page, toInject, cmd.StartLine)
 
+						//Helpers.Print("white", "Adding ", Helpers.Join(toInject, "\n"))
+
 						ExpandContent(&page, ProgramState)
 						break // Do not continue processes, the recursive call above will do that
 					}
 				} else {
+					//Helpers.Print("white", "Adding2 ", cmd.Control)
 					cmdStack.Push(cmd) // Put back onto the stack if not ending the topmost command
 				}
 
@@ -329,8 +352,10 @@ func ExpandContent(content *[]string, ProgramState *State.CompilerState) {
 				cmd := Semantics.GetCommand(line)
 				cmd.StartLine = i
 
+				//Helpers.Print("magenta", "Start of multiline: ", line)
 				cmdStack.Push(cmd)
 				partOfCmd = true // Do not add this line to the command ifTrue/ifFalse
+
 			}
 		} else { // End if !inForEachLoop
 			if Grammar.EndsMultilineCommand(line) {
@@ -369,6 +394,7 @@ func ExpandContent(content *[]string, ProgramState *State.CompilerState) {
 							ExpandContent(&thisLoop, ProgramState)
 							ProgramState.Meta.Pop()
 
+							//Helpers.Print("red", "Expanded For: ", Helpers.Join(thisLoop, "\n"))
 							// Add to the foreach loop results
 							foreachResult = append(thisLoop, foreachResult...)
 						}
@@ -382,6 +408,7 @@ func ExpandContent(content *[]string, ProgramState *State.CompilerState) {
 					}
 
 				} else {
+					//Helpers.Print("white", "Adding ", cmd.Control)
 					cmdStack.Push(cmd) // Put back onto the stack if not ending the topmost command
 				}
 			}
